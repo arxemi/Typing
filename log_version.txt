@@ -1,0 +1,5 @@
+#versione 4.0
+-implementazione del progetto 'chat_project_v3'
+-aggiunta dell'opzione login e registrazione nel client
+-invio delle info al server, per la gestione delle richieste di login o registrazione
+-due tipologie di costruttori sul client, login o registrazione
