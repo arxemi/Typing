@@ -1,12 +1,9 @@
 package client;
 
-import com.sun.xml.internal.bind.v2.model.annotation.RuntimeAnnotationReader;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
-import java.net.Socket;
 
 /**
  * Created by emilio on 16/01/16.
@@ -85,12 +82,6 @@ public class GUIclient extends JFrame{
                       client.disconnect(1);
 
               }
-
-            /*@Override
-            public void windowOpened(WindowEvent e) {
-                super.windowOpened(e);
-                initPanelRequest();
-            }*/
         });
     }
 
