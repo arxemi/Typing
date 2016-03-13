@@ -1,6 +1,7 @@
 package client;
 
 import javax.swing.*;
+import javax.swing.tree.ExpandVetoException;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
@@ -86,6 +87,10 @@ public class GUIclient extends JFrame{
     }
 
     public void initConnection(){
+        connection_status = true;
+        txtMex.setEnabled(true);
+        btnSend.setEnabled(true);
+        btn_connection.setEnabled(true);
         new Thread(new Runnable() {
             public void run() {
                 while (true){
@@ -128,17 +133,17 @@ public class GUIclient extends JFrame{
             pnl_log_in.add(txt_psswd);
 
             int re = JOptionPane.showOptionDialog(null,pnl_log_in,"Login - form",JOptionPane.NO_OPTION,
-                    JOptionPane.NO_OPTION,null,buttons_log_in,buttons_log_in[0]);
+                    JOptionPane.INFORMATION_MESSAGE,null,buttons_log_in,buttons_log_in[0]);
             if(re == 0){
-                //inserire i controlli
-                client = new Client("localhost",6789,txt_user.getText(),txt_psswd.getText(),Client.LOG_IN_REQUEST);
+                String username=null,password=null;
+                try{
+                    username = txt_user.getText();
+                    password = new String(txt_psswd.getPassword());
+                }catch (Exception e){}
+                client = new Client("localhost",6789,username,password,Client.LOG_IN_REQUEST);
                 int answare_from_server = client.validateRequest();
                 if(answare_from_server == 1){
                     initConnection();
-                    connection_status = true;
-                    txtMex.setEnabled(true);
-                    btnSend.setEnabled(true);
-                    btn_connection.setEnabled(true);
                 }else if(answare_from_server == 0) {
                     JOptionPane.showMessageDialog(null,"Errore, controllare i paramentri inseriti!",
                             "Errore",JOptionPane.ERROR_MESSAGE);
@@ -168,18 +173,19 @@ public class GUIclient extends JFrame{
             pnl_sign_up.add(txt_c_psswd);
 
             int re = JOptionPane.showOptionDialog(null,pnl_sign_up,"Sign-up form",JOptionPane.NO_OPTION,
-                    JOptionPane.NO_OPTION,null,buttons_log_in,buttons_log_in[0]);
+                    JOptionPane.INFORMATION_MESSAGE,null,buttons_log_in,buttons_log_in[0]);
             if(re == 0){
-                if(txt_psswd.getText().equals(txt_c_psswd.getText()) &&
-                        !txt_user.getText().isEmpty() && !txt_psswd.getText().isEmpty()) {
-                    client = new Client("localhost", 6789, txt_user.getText(),txt_psswd.getText(), Client.SIGN_UP_REQUEST);
+                String username=null,password=null,confirmedPassword=null;
+                try{
+                    username = txt_user.getText();
+                    password = new String(txt_psswd.getPassword());
+                    confirmedPassword = new String(txt_c_psswd.getPassword());
+                }catch (Exception e){}
+                if(password.equals(confirmedPassword) && !username.isEmpty() && !password.isEmpty()) {
+                    client = new Client("localhost", 6789, username,password, Client.SIGN_UP_REQUEST);
                     int answare_from_server = client.validateRequest();
                     if(answare_from_server == 1){
                         initConnection();
-                        connection_status = true;
-                        txtMex.setEnabled(true);
-                        btnSend.setEnabled(true);
-                        btn_connection.setEnabled(true);
                     }else if(answare_from_server == 0){
                         JOptionPane.showMessageDialog(null,"Errore, username già utilizzato!",
                                 "Errore",JOptionPane.ERROR_MESSAGE);

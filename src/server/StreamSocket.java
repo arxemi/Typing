@@ -1,5 +1,7 @@
 package server;
 
+import server.listener_interface.StreamSocketListener;
+
 import java.io.DataOutputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -28,7 +30,7 @@ public class StreamSocket extends Thread {
     private final String REQUEST_NOT_VALIDATED = "500-fh4hjh45h4";
     private final String USER_ALREADY_CONNECTED = "502-fh4hjh45h4";
 
-    SocketListener socketListener;
+    StreamSocketListener streamSocketListener;
 
     public StreamSocket(Socket sct){
         this.sct = sct;
@@ -87,29 +89,29 @@ public class StreamSocket extends Thread {
         }catch (Exception e){}
     }
 
-    public void addSocketListener(SocketListener socketListener){
-        this.socketListener = socketListener;
+    public void addSocketListener(StreamSocketListener streamSocketListener){
+        this.streamSocketListener = streamSocketListener;
     }
 
     public void sendRequestGroupAdd(){
-        SocketEvent socketEvent = new SocketEvent(this);
-        socketEvent.setStreamSocket(this);
-        socketListener.addClientToGroup(socketEvent);
+        StreamSocketEvent streamSocketEvent = new StreamSocketEvent(this);
+        streamSocketEvent.setStreamSocket(this);
+        streamSocketListener.onJoinGroupRequest(streamSocketEvent);
     }
 
     public void sendMessageToServer(String s){
-        SocketEvent socketEvent = new SocketEvent(this);
-        socketEvent.setNameClient(user_client);
-        socketEvent.setMessage(s);
-        socketEvent.setIDclient(ID);
-        socketListener.onReciveMessage(socketEvent);
+        StreamSocketEvent streamSocketEvent = new StreamSocketEvent(this);
+        streamSocketEvent.setNameClient(user_client);
+        streamSocketEvent.setMessage(s);
+        streamSocketEvent.setIDclient(ID);
+        streamSocketListener.onReciveMessage(streamSocketEvent);
     }
 
     public void sendDisconnectionRequest(){
-        SocketEvent socketEvent = new SocketEvent(this);
-        socketEvent.setIDclient(ID);
-        socketEvent.setNameClient(user_client);
-        socketListener.onRequestDeleteConnection(socketEvent);
+        StreamSocketEvent streamSocketEvent = new StreamSocketEvent(this);
+        streamSocketEvent.setIDclient(ID);
+        streamSocketEvent.setNameClient(user_client);
+        streamSocketListener.onRequestDeleteConnection(streamSocketEvent);
     }
 
     public String[] infoClient(){

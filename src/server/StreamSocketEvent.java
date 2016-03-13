@@ -6,13 +6,13 @@ import java.util.EventObject;
 /**
  * Created by emilio on 24/01/16.
  */
-public class SocketEvent extends EventObject {
+public class StreamSocketEvent extends EventObject {
     private String message;
     private int IDclient;
     private String nameClient;
     private StreamSocket streamSocket;
 
-    public SocketEvent(Object e){
+    public StreamSocketEvent(Object e){
         super(e);
     }
 

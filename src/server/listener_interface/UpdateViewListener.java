@@ -1,4 +1,6 @@
-package server;
+package server.listener_interface;
+
+import server.UpdateViewEvent;
 
 import java.util.EventListener;
 

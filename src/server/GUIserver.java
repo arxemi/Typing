@@ -1,5 +1,8 @@
 package server;
 
+import server.listener_interface.RequestListener;
+import server.listener_interface.UpdateViewListener;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -47,7 +50,7 @@ public class GUIserver extends JFrame {
         txtArea.setEditable(false);
         lblState.setForeground(Color.RED);
 
-        mainServer.addClientListener(new ClientListener() {
+        mainServer.addClientListener(new RequestListener() {
             public void onConnectionRequest(ClientEvent e) {
                 dtm.addRow(e.getClientValues());
             }

@@ -1,5 +1,9 @@
 package server;
 
+import server.listener_interface.RequestListener;
+import server.listener_interface.StreamSocketListener;
+import server.listener_interface.UpdateViewListener;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -8,7 +12,7 @@ import java.util.Vector;
 /**
  * Created by emilio on 16/01/16.
  */
-public class Server implements SocketListener{
+public class Server implements StreamSocketListener {
 
     private Vector<StreamSocket> arrayStreamSocket = new Vector<StreamSocket>(5);
     private ServerSocket serverSocket;
@@ -17,7 +21,7 @@ public class Server implements SocketListener{
     private int port;
     public static final String CLOSING_CODE = "hsh53wh2k2b38dnwy3nu3tdb38bd7eyf2debidg2\n";
 
-    ClientListener clientListener;
+    RequestListener requestListener;
     UpdateViewListener updateViewListener;
 
 
@@ -45,7 +49,7 @@ public class Server implements SocketListener{
     }
 
     @Override
-    public void addClientToGroup(SocketEvent e) {
+    public void onJoinGroupRequest(StreamSocketEvent e) {
         arrayStreamSocket.add(e.getStreamSocket());
         arrayStreamSocket.lastElement().ID = arrayStreamSocket.size()-1;
         updateNumOfClients(arrayStreamSocket.size());
@@ -54,7 +58,7 @@ public class Server implements SocketListener{
     }
 
     @Override
-    public void onRequestDeleteConnection(SocketEvent e) {
+    public void onRequestDeleteConnection(StreamSocketEvent e) {
         setLogView("RIMOSSO client "+e.getNameClient()+'\n');
         notificationRemoveClient(e.getIDclient());
         arrayStreamSocket.removeElementAt(e.getIDclient());
@@ -63,7 +67,7 @@ public class Server implements SocketListener{
     }
 
     @Override
-    public void onReciveMessage(SocketEvent e) {
+    public void onReciveMessage(StreamSocketEvent e) {
         setLogView(e.getMessage()+" INVIATO DA "+
                 arrayStreamSocket.elementAt(e.getIDclient()).sct.getInetAddress()+" NOME: "+
                 arrayStreamSocket.elementAt(e.getIDclient()).user_client.toUpperCase()+'\n');
@@ -93,8 +97,8 @@ public class Server implements SocketListener{
 
     }
 
-    public void addClientListener(ClientListener clientListener){
-        this.clientListener = clientListener;
+    public void addClientListener(RequestListener requestListener){
+        this.requestListener = requestListener;
     }
     public void addUpdateViewListener(UpdateViewListener updateViewListener){this.updateViewListener = updateViewListener;}
 
@@ -102,7 +106,7 @@ public class Server implements SocketListener{
         ClientEvent clientEvent = new ClientEvent(this);
         clientEvent.setAddress(infoCliet[0]);
         clientEvent.setName(infoCliet[1]);
-        clientListener.onConnectionRequest(clientEvent);
+        requestListener.onConnectionRequest(clientEvent);
     }
 
     private void updateNumOfClients(int num){
@@ -120,13 +124,13 @@ public class Server implements SocketListener{
     private void notificationRemoveClient(int i){
         ClientEvent clientEvent = new ClientEvent(this);
         clientEvent.setIndexOfclient(i);
-        clientListener.onDisconnectionRequest(clientEvent);
+        requestListener.onDisconnectionRequest(clientEvent);
     }
 
     private void notificationRemoveAllClients(){
         ClientEvent clientEvent = new ClientEvent(this);
         clientEvent.removeAllClients();
-        clientListener.onDisconnectionRequest(clientEvent);
+        requestListener.onDisconnectionRequest(clientEvent);
     }
 
     /*implementazione nella versione 4
