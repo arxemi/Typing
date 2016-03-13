@@ -1,7 +1,6 @@
 package client;
 
 import javax.swing.*;
-import javax.swing.tree.ExpandVetoException;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
@@ -9,7 +8,7 @@ import java.io.IOException;
 /**
  * Created by emilio on 16/01/16.
  */
-public class GUIclient extends JFrame{
+public class WindowClient extends JFrame{
     JPanel pnlSouth = new JPanel();
     JPanel pnl_log_in = new JPanel(new GridLayout(2,2));
     JPanel pnl_sign_up = new JPanel(new GridLayout(3,2));
@@ -25,7 +24,7 @@ public class GUIclient extends JFrame{
     private boolean connection_status = false;
     private Client client = null;
 
-    public GUIclient(){
+    public WindowClient(){
         super("Chat");
         txtArea.setEditable(false);
         add(BorderLayout.CENTER, spn);
@@ -214,7 +213,7 @@ public class GUIclient extends JFrame{
     public static void main(String[] arg){
         Runnable init = new Runnable() {
             public void run() {
-                new GUIclient().initPanelRequest();
+                new WindowClient().initPanelRequest();
             }
         };
         SwingUtilities.invokeLater(init);

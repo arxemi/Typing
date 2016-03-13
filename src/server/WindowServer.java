@@ -12,7 +12,7 @@ import java.awt.event.ActionListener;
 /**
  * Created by emilio on 20/01/16.
  */
-public class GUIserver extends JFrame {
+public class WindowServer extends JFrame {
     private JPanel globalpanel = new JPanel(new BorderLayout());
     private JPanel pnl = new JPanel(new FlowLayout(FlowLayout.RIGHT,30,10));
     private JPanel pnlNumberClients = new JPanel(new FlowLayout(FlowLayout.LEADING,5,5));
@@ -33,7 +33,7 @@ public class GUIserver extends JFrame {
     private Thread serivce;
     private boolean serverIsRunning = false;
 
-    public GUIserver(){
+    public WindowServer(){
         super("Server - Sistema di controllo");
 
         dtm.setColumnIdentifiers(new String[]{"Address","Name"});
@@ -107,7 +107,7 @@ public class GUIserver extends JFrame {
     public static void main(String[] arg){
         Runnable init  = new Runnable() {
             public void run() {
-                new GUIserver();
+                new WindowServer();
             }
         };
         SwingUtilities.invokeLater(init);
