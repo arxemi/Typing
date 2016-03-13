@@ -1,10 +1,10 @@
 package server.listener_interface;
 
-import server.ClientEvent;
+import server.RequestEvent;
 
 import java.util.EventListener;
 
 public interface RequestListener extends EventListener {
-    public void onConnectionRequest(ClientEvent e);
-    public void onDisconnectionRequest(ClientEvent e);
+    public void onConnectionRequest(RequestEvent e);
+    public void onDisconnectionRequest(RequestEvent e);
 }

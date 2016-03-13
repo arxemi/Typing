@@ -51,10 +51,10 @@ public class GUIserver extends JFrame {
         lblState.setForeground(Color.RED);
 
         mainServer.addClientListener(new RequestListener() {
-            public void onConnectionRequest(ClientEvent e) {
+            public void onConnectionRequest(RequestEvent e) {
                 dtm.addRow(e.getClientValues());
             }
-            public void onDisconnectionRequest(ClientEvent e) {
+            public void onDisconnectionRequest(RequestEvent e) {
                 if(!e.removeAllClients_)
                     dtm.removeRow(e.getIndexOfclient());
                 else{

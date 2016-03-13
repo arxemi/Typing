@@ -103,10 +103,10 @@ public class Server implements StreamSocketListener {
     public void addUpdateViewListener(UpdateViewListener updateViewListener){this.updateViewListener = updateViewListener;}
 
     private void notificationNewClient(String[] infoCliet){
-        ClientEvent clientEvent = new ClientEvent(this);
-        clientEvent.setAddress(infoCliet[0]);
-        clientEvent.setName(infoCliet[1]);
-        requestListener.onConnectionRequest(clientEvent);
+        RequestEvent requestEvent = new RequestEvent(this);
+        requestEvent.setAddress(infoCliet[0]);
+        requestEvent.setName(infoCliet[1]);
+        requestListener.onConnectionRequest(requestEvent);
     }
 
     private void updateNumOfClients(int num){
@@ -122,15 +122,15 @@ public class Server implements StreamSocketListener {
     }
 
     private void notificationRemoveClient(int i){
-        ClientEvent clientEvent = new ClientEvent(this);
-        clientEvent.setIndexOfclient(i);
-        requestListener.onDisconnectionRequest(clientEvent);
+        RequestEvent requestEvent = new RequestEvent(this);
+        requestEvent.setIndexOfclient(i);
+        requestListener.onDisconnectionRequest(requestEvent);
     }
 
     private void notificationRemoveAllClients(){
-        ClientEvent clientEvent = new ClientEvent(this);
-        clientEvent.removeAllClients();
-        requestListener.onDisconnectionRequest(clientEvent);
+        RequestEvent requestEvent = new RequestEvent(this);
+        requestEvent.removeAllClients();
+        requestListener.onDisconnectionRequest(requestEvent);
     }
 
     /*implementazione nella versione 4

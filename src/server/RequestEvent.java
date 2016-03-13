@@ -6,14 +6,14 @@ import java.util.EventObject;
 /**
  * Created by emilio on 24/01/16.
  */
-public class ClientEvent extends EventObject{
+public class RequestEvent extends EventObject{
     private static final long serialVersionUID = 1L;
     private String address;
     private String name;
     private int indexOfclient;
     boolean removeAllClients_ = false;
 
-    public ClientEvent(Object e){
+    public RequestEvent(Object e){
         super(e);
     }
     public void setAddress(String address){
