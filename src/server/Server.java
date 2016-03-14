@@ -132,17 +132,4 @@ public class Server implements StreamSocketListener {
         requestEvent.removeAllClients();
         requestListener.onDisconnectionRequest(requestEvent);
     }
-
-    /*implementazione nella versione 4
-    public boolean isIntoBlackList(String addr){
-        boolean flag = false;
-        for(int i=0;i<blackList.size();i++){
-            if(blackList.elementAt(i).equals(addr)) {
-                flag = true;
-                break;
-            }
-        }
-        return flag;
-    }
-    */
 }
