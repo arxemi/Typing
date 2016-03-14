@@ -23,11 +23,7 @@ public class StreamSocket extends Thread {
     static Vector<String> name_of_users_connected = new Vector<>(5);
     private Connection connection = null;
     private Statement statement = null;
-    private ResultSet resultSet = null;
-
-
-
-    StreamSocketListener streamSocketListener;
+    private StreamSocketListener streamSocketListener;
 
     public StreamSocket(Socket sct){
         this.sct = sct;
@@ -143,6 +139,7 @@ public class StreamSocket extends Thread {
     //metodo di log-in
     private boolean sign_in(String nomeUtente, String psswd){
         boolean val_res = false;
+        ResultSet resultSet = null;
         String cripted_psswd = cryptPsswd(psswd);
         String user_found = "";
         String password_found = "";

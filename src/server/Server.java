@@ -19,7 +19,7 @@ public class Server implements StreamSocketListener {
     private Socket socket;
 
     private int port;
-    public static final String CLOSING_CODE = "hsh53wh2k2b38dnwy3nu3tdb38bd7eyf2debidg2\n";
+    private final String CLOSING_CODE = "hsh53wh2k2b38dnwy3nu3tdb38bd7eyf2debidg2\n";
 
     RequestListener requestListener;
     UpdateViewListener updateViewListener;
