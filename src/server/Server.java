@@ -51,9 +51,9 @@ public class Server implements StreamSocketListener {
     @Override
     public void onJoinGroupRequest(StreamSocketEvent e) {
         arrayStreamSocket.add(e.getStreamSocket());
-        arrayStreamSocket.lastElement().ID = arrayStreamSocket.size()-1;
+        arrayStreamSocket.lastElement().setIdConnection(arrayStreamSocket.size()-1);
         updateNumOfClients(arrayStreamSocket.size());
-        setLogView("New request from "+arrayStreamSocket.lastElement().sct.getInetAddress()+'\n');
+        setLogView("New request from "+arrayStreamSocket.lastElement().getSocket().getInetAddress()+'\n');
         notificationNewClient(arrayStreamSocket.lastElement().infoClient());
     }
 
@@ -63,18 +63,18 @@ public class Server implements StreamSocketListener {
         notificationRemoveClient(e.getIDclient());
         arrayStreamSocket.removeElementAt(e.getIDclient());
         updateNumOfClients(arrayStreamSocket.size());
-        for(int i=0;i<arrayStreamSocket.size();i++){ arrayStreamSocket.elementAt(i).ID = i;}
+        for(int i=0;i<arrayStreamSocket.size();i++){ arrayStreamSocket.elementAt(i).setIdConnection(i);}
     }
 
     @Override
     public void onReciveMessage(StreamSocketEvent e) {
         setLogView(e.getMessage()+" INVIATO DA "+
-                arrayStreamSocket.elementAt(e.getIDclient()).sct.getInetAddress()+" NOME: "+
-                arrayStreamSocket.elementAt(e.getIDclient()).user_client.toUpperCase()+'\n');
+                arrayStreamSocket.elementAt(e.getIDclient()).getSocket().getInetAddress()+" NOME: "+
+                arrayStreamSocket.elementAt(e.getIDclient()).getUserClient().toUpperCase()+'\n');
         for(int i=0;i<arrayStreamSocket.size();i++){
             if(i != e.getIDclient()){
                 try {
-                    arrayStreamSocket.elementAt(i).outputStream.writeBytes(e.getNameClient().toUpperCase()+ ": "+
+                    arrayStreamSocket.elementAt(i).getOutputStream().writeBytes(e.getNameClient().toUpperCase()+ ": "+
                             e.getMessage()+'\n');
                 }catch (Exception ex){}
             }
@@ -85,7 +85,7 @@ public class Server implements StreamSocketListener {
         try {
             serverSocket.close();
             for(int i=0;i<arrayStreamSocket.size();i++){
-                arrayStreamSocket.elementAt(i).outputStream.writeBytes(CLOSING_CODE);
+                arrayStreamSocket.elementAt(i).getOutputStream().writeBytes(CLOSING_CODE);
             }
             arrayStreamSocket.removeAllElements();
             notificationRemoveAllClients();

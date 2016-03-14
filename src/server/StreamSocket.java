@@ -15,20 +15,17 @@ import java.util.Vector;
  * Created by emilio on 16/01/16.
  */
 public class StreamSocket extends Thread {
-    Socket sct;
-    DataOutputStream outputStream;
-    BufferedReader bufferedReader;
-    String user_client;
-    int ID;
+    private Socket sct;
+    private DataOutputStream outputStream;
+    private BufferedReader bufferedReader;
+    private String user_client;
+    private int ID_connection;
     static Vector<String> name_of_users_connected = new Vector<>(5);
     private Connection connection = null;
     private Statement statement = null;
     private ResultSet resultSet = null;
-    private final int LOG_IN_REQUEST = 0;
-    private final int SIGN_UP_REQUEST = 1;
-    private final String REQUEST_VALIDATED = "501-fh4hjh45h4";
-    private final String REQUEST_NOT_VALIDATED = "500-fh4hjh45h4";
-    private final String USER_ALREADY_CONNECTED = "502-fh4hjh45h4";
+
+
 
     StreamSocketListener streamSocketListener;
 
@@ -40,7 +37,29 @@ public class StreamSocket extends Thread {
         }catch (Exception e){}
     }
 
+    public Socket getSocket(){
+        return sct;
+    }
+    public DataOutputStream getOutputStream(){
+        return outputStream;
+    }
+    public BufferedReader getBufferedReader(){
+        return bufferedReader;
+    }
+    public String getUserClient(){
+        return user_client;
+    }
+    public int getIdConnection(){
+        return ID_connection;
+    }
+    public void setIdConnection(int id){
+        ID_connection = id;
+    }
+
+
     public boolean validateRequestType()throws Exception{
+        final int LOG_IN_REQUEST = 0;
+        final int SIGN_UP_REQUEST = 1;
         //gestire tipo richiesta
         int request_type = Integer.parseInt(bufferedReader.readLine());
         user_client = bufferedReader.readLine();
@@ -56,6 +75,9 @@ public class StreamSocket extends Thread {
     }
 
     public void run(){
+        final String REQUEST_VALIDATED = "501-fh4hjh45h4";
+        final String REQUEST_NOT_VALIDATED = "500-fh4hjh45h4";
+        final String USER_ALREADY_CONNECTED = "502-fh4hjh45h4";
         try {
             if(validateRequestType()){
                 if(!isOnListOfClientsConnected(user_client)){
@@ -99,23 +121,23 @@ public class StreamSocket extends Thread {
         streamSocketListener.onJoinGroupRequest(streamSocketEvent);
     }
 
-    public void sendMessageToServer(String s){
+    private void sendMessageToServer(String s){
         StreamSocketEvent streamSocketEvent = new StreamSocketEvent(this);
         streamSocketEvent.setNameClient(user_client);
         streamSocketEvent.setMessage(s);
-        streamSocketEvent.setIDclient(ID);
+        streamSocketEvent.setIDclient(ID_connection);
         streamSocketListener.onReciveMessage(streamSocketEvent);
     }
 
-    public void sendDisconnectionRequest(){
+    private void sendDisconnectionRequest(){
         StreamSocketEvent streamSocketEvent = new StreamSocketEvent(this);
-        streamSocketEvent.setIDclient(ID);
+        streamSocketEvent.setIDclient(ID_connection);
         streamSocketEvent.setNameClient(user_client);
         streamSocketListener.onRequestDeleteConnection(streamSocketEvent);
     }
 
     public String[] infoClient(){
-        return new String[]{sct.getInetAddress().toString(),user_client.toString()};
+        return new String[]{sct.getInetAddress().toString(),user_client};
     }
 
     //metodo di log-in
