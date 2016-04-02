@@ -1,9 +1,13 @@
 package server;
 
-import server.listener_interface.RequestListener;
-import server.listener_interface.StreamSocketListener;
-import server.listener_interface.UpdateViewListener;
+import message.MessageObject;
+import server.listener.RequestListener;
+import server.listener.StreamSocketListener;
+import server.listener.UpdateViewListener;
 
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -16,10 +20,8 @@ public class Server implements StreamSocketListener {
 
     private Vector<StreamSocket> arrayStreamSocket = new Vector<StreamSocket>(5);
     private ServerSocket serverSocket;
-    private Socket socket;
-
     private int port;
-    private final String CLOSING_CODE = "hsh53wh2k2b38dnwy3nu3tdb38bd7eyf2debidg2\n";
+    private boolean connected = false;
 
     RequestListener requestListener;
     UpdateViewListener updateViewListener;
@@ -37,55 +39,110 @@ public class Server implements StreamSocketListener {
         try {
             serverSocket = new ServerSocket(port);
             setLogView("Server partito in esecuzione\n");
-            while(true){
-                socket = serverSocket.accept();
-                StreamSocket temp_socket = new StreamSocket(socket);
-                temp_socket.addSocketListener(this);
-                temp_socket.start();
-            }
-
+            connected = true;
+            new Thread(new Runnable() {
+                public void run() {
+                    try{
+                        while(connected){
+                            Socket socket = serverSocket.accept();
+                            StreamSocket temp_socket = new StreamSocket(socket);
+                            addListenerToConnection(temp_socket);
+                            temp_socket.start();
+                        }
+                    }catch (Exception ex){setLogView("Fine esecuzione server\n");}
+                }
+            }).start();
         }catch (Exception e){}
-        setLogView("Fine esecuzione server\n");
+
+    }
+
+    private void addListenerToConnection(StreamSocket streamSocket){
+        streamSocket.addSocketListener(this);
     }
 
     @Override
     public void onJoinGroupRequest(StreamSocketEvent e) {
-        arrayStreamSocket.add(e.getStreamSocket());
-        arrayStreamSocket.lastElement().setIdConnection(arrayStreamSocket.size()-1);
-        updateNumOfClients(arrayStreamSocket.size());
-        setLogView("New request from "+arrayStreamSocket.lastElement().getSocket().getInetAddress()+'\n');
-        notificationNewClient(arrayStreamSocket.lastElement().infoClient());
+        serviceJoinGroupRequest(e);
+    }
+
+    private synchronized void serviceJoinGroupRequest(final StreamSocketEvent e){
+        new Thread(new Runnable() {
+            public void run() {
+                arrayStreamSocket.add(e.getStreamSocket());
+                arrayStreamSocket.lastElement().setIdConnection(arrayStreamSocket.size()-1);
+                updateNumOfClients(arrayStreamSocket.size());
+                setLogView("New request from "+arrayStreamSocket.lastElement().getSocket().getInetAddress()+'\n');
+                notificationNewClient(arrayStreamSocket.lastElement().infoClient());
+                MessageObject messageObject = new MessageObject(MessageObject.requestType.ADD_ONLINE_USER);
+                messageObject.setUserName(e.getNameClient());
+                for(int i=0;i<arrayStreamSocket.size();i++){
+                    try {
+                        if(!arrayStreamSocket.elementAt(i).getUserClient().equals(e.getNameClient()))
+                            arrayStreamSocket.elementAt(i).getOutputStream().writeObject(messageObject);
+                    }catch (IOException ex){}
+
+                }
+            }
+        }).start();
     }
 
     @Override
     public void onRequestDeleteConnection(StreamSocketEvent e) {
-        setLogView("RIMOSSO client "+e.getNameClient()+'\n');
-        notificationRemoveClient(e.getIDclient());
-        arrayStreamSocket.removeElementAt(e.getIDclient());
-        updateNumOfClients(arrayStreamSocket.size());
-        for(int i=0;i<arrayStreamSocket.size();i++){ arrayStreamSocket.elementAt(i).setIdConnection(i);}
+        serviceCommunicationDeleting(e);
+    }
+
+    private synchronized void serviceCommunicationDeleting(final StreamSocketEvent e){
+        new Thread(new Runnable() {
+            public void run() {
+                setLogView("RIMOSSO client "+e.getNameClient()+'\n');
+                notificationRemoveClient(e.getIDclient());
+                arrayStreamSocket.removeElementAt(e.getIDclient());
+                updateNumOfClients(arrayStreamSocket.size());
+                MessageObject messageObject = new MessageObject(MessageObject.requestType.REMOVE_ONLINE_USER);
+                messageObject.setUserName(e.getNameClient());
+                for(int i=0;i<arrayStreamSocket.size();i++){
+                    arrayStreamSocket.elementAt(i).setIdConnection(i);
+                    try {
+                        arrayStreamSocket.elementAt(i).getOutputStream().writeObject(messageObject);
+                    }catch (IOException xe){}
+
+                }
+            }
+        }).start();
     }
 
     @Override
     public void onReciveMessage(StreamSocketEvent e) {
-        setLogView(e.getMessage()+" INVIATO DA "+
-                arrayStreamSocket.elementAt(e.getIDclient()).getSocket().getInetAddress()+" NOME: "+
-                arrayStreamSocket.elementAt(e.getIDclient()).getUserClient().toUpperCase()+'\n');
-        for(int i=0;i<arrayStreamSocket.size();i++){
-            if(i != e.getIDclient()){
-                try {
-                    arrayStreamSocket.elementAt(i).getOutputStream().writeBytes(e.getNameClient().toUpperCase()+ ": "+
-                            e.getMessage()+'\n');
-                }catch (Exception ex){}
+        serviceCommunicationMessage(e);
+    }
+
+    private synchronized void serviceCommunicationMessage(final StreamSocketEvent e){
+        new Thread(new Runnable() {
+            public void run() {
+                setLogView(e.getMessage()+" INVIATO DA "+
+                        arrayStreamSocket.elementAt(e.getIDclient()).getSocket().getInetAddress()+" NOME: "+
+                        arrayStreamSocket.elementAt(e.getIDclient()).getUserClient().toUpperCase()+'\n');
+                for(int i=0;i<arrayStreamSocket.size();i++){
+                    if(i != e.getIDclient()){
+                        try {
+                            MessageObject messageObject = new MessageObject(MessageObject.requestType.SEND_MESSAGE);
+                            messageObject.setMessage(e.getNameClient().toUpperCase()+ ": "+
+                                    e.getMessage());
+                            arrayStreamSocket.elementAt(i).getOutputStream().writeObject(messageObject);
+                        }catch (Exception ex){}
+                    }
+                }
             }
-        }
+        }).start();
     }
 
     public void disconnect(){
         try {
             serverSocket.close();
+            connected = false;
             for(int i=0;i<arrayStreamSocket.size();i++){
-                arrayStreamSocket.elementAt(i).getOutputStream().writeBytes(CLOSING_CODE);
+                arrayStreamSocket.elementAt(i).getOutputStream().writeObject(new MessageObject(MessageObject.requestType.DISCONNECTION_FROM_SERVER));
+                arrayStreamSocket.elementAt(i).disconnectionSocket();
             }
             arrayStreamSocket.removeAllElements();
             notificationRemoveAllClients();

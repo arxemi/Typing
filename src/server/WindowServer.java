@@ -1,7 +1,7 @@
 package server;
 
-import server.listener_interface.RequestListener;
-import server.listener_interface.UpdateViewListener;
+import server.listener.RequestListener;
+import server.listener.UpdateViewListener;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;

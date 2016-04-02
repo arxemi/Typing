@@ -1,10 +1,10 @@
 package server;
 
-import server.listener_interface.StreamSocketListener;
+import message.MessageObject;
+import server.listener.StreamSocketListener;
 
-import java.io.DataOutputStream;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import javax.net.ssl.SSLSocket;
+import java.io.*;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.security.MessageDigest;
@@ -16,30 +16,31 @@ import java.util.Vector;
  */
 public class StreamSocket extends Thread {
     private Socket sct;
-    private DataOutputStream outputStream;
-    private BufferedReader bufferedReader;
+    private ObjectOutputStream outputStream;
+    private ObjectInputStream bufferedReader;
     private String user_client;
     private int ID_connection;
-    static Vector<String> name_of_users_connected = new Vector<>(5);
+    private static Vector<String> name_of_users_connected = new Vector<>(5);
     private Connection connection = null;
     private Statement statement = null;
     private StreamSocketListener streamSocketListener;
+    private boolean connected = false;
 
     public StreamSocket(Socket sct){
         this.sct = sct;
         try {
-            outputStream = new DataOutputStream(sct.getOutputStream());
-            bufferedReader = new BufferedReader(new InputStreamReader(sct.getInputStream()));
+            outputStream = new ObjectOutputStream(sct.getOutputStream());
+            bufferedReader = new ObjectInputStream(sct.getInputStream());
         }catch (Exception e){}
     }
 
     public Socket getSocket(){
         return sct;
     }
-    public DataOutputStream getOutputStream(){
+    public ObjectOutputStream getOutputStream(){
         return outputStream;
     }
-    public BufferedReader getBufferedReader(){
+    public ObjectInputStream getBufferedReader(){
         return bufferedReader;
     }
     public String getUserClient(){
@@ -54,55 +55,47 @@ public class StreamSocket extends Thread {
 
 
     public boolean validateRequestType()throws Exception{
-        final int LOG_IN_REQUEST = 0;
-        final int SIGN_UP_REQUEST = 1;
-        //gestire tipo richiesta
-        int request_type = Integer.parseInt(bufferedReader.readLine());
-        user_client = bufferedReader.readLine();
-        String psswd = bufferedReader.readLine();
         boolean request = false;
-
-        if(request_type == LOG_IN_REQUEST){
-            request = sign_in(user_client,psswd);
-        }else if(request_type == SIGN_UP_REQUEST){
-            request = sign_up(user_client,psswd);
+        MessageObject messageObject = (MessageObject) bufferedReader.readObject();
+        user_client = messageObject.getUserName();
+        switch (messageObject.getType()){
+            case LOG_IN:
+                request = sign_in(messageObject.getUserName(),messageObject.getUserPsswd());
+                break;
+            case SIGN_UP:
+                request = sign_up(messageObject.getUserName(),messageObject.getUserPsswd());
+                break;
         }
         return request;
     }
 
     public void run(){
-        final String REQUEST_VALIDATED = "501-fh4hjh45h4";
-        final String REQUEST_NOT_VALIDATED = "500-fh4hjh45h4";
-        final String USER_ALREADY_CONNECTED = "502-fh4hjh45h4";
         try {
             if(validateRequestType()){
                 if(!isOnListOfClientsConnected(user_client)){
                     sendRequestGroupAdd();
-                    name_of_users_connected.add(user_client);
-                    outputStream.writeBytes(REQUEST_VALIDATED+"\n");
-                    outputStream.writeBytes("Benvenuto nella chat "+user_client+"!\n");
-                    while(true){
-                        String stringa = bufferedReader.readLine();
-                        if(stringa.equals("b5ih45i54g5hk443hbk43b")){
+                    addClient();
+                    MessageObject messageObject = new message.MessageObject(message.MessageObject.requestType.REQUEST_VALIDATED);
+                    messageObject.setMessage("Benvenuto nella chat "+user_client+"!");
+                    messageObject.setListOnlineClients(name_of_users_connected);
+                    outputStream.writeObject(messageObject);
+                    connected = true;
+                    while(connected){
+                        message.MessageObject messageObject1 = (message.MessageObject)bufferedReader.readObject();
+                        if(messageObject1.getType().equals(MessageObject.requestType.DISCONNECTION_FROM_CLIENT)){
                             sendDisconnectionRequest();
+                            disconnectionSocket();
                             break;
                         }
-                        else if(stringa.equals("hsh53wh2k2b38dnwy3nu3tdb38bd7eyf2debidg2")){
-                            break;
-                        }
-                        else if(!stringa.isEmpty() && !stringa.equals(" ")){
-                            sendMessageToServer(stringa);
+                        else if(!messageObject1.getMessage().isEmpty() && !messageObject1.getMessage().equals(" ")){
+                            sendMessageToServer(messageObject1.getMessage());
                         }
                     }
-                    name_of_users_connected.removeElement(user_client);
-                    outputStream.close();
-                    bufferedReader.close();
-                    sct.close();
                 }else{
-                    outputStream.writeBytes(USER_ALREADY_CONNECTED+"\n");
+                    outputStream.writeObject(new MessageObject(MessageObject.requestType.USER_ALREADY_CONNECTED));
                 }
             }else {
-                outputStream.writeBytes(REQUEST_NOT_VALIDATED+"\n");
+                outputStream.writeObject(new MessageObject(MessageObject.requestType.REQUEST_NOT_VALIDATED));
             }
         }catch (Exception e){}
     }
@@ -114,6 +107,7 @@ public class StreamSocket extends Thread {
     public void sendRequestGroupAdd(){
         StreamSocketEvent streamSocketEvent = new StreamSocketEvent(this);
         streamSocketEvent.setStreamSocket(this);
+        streamSocketEvent.setNameClient(user_client);
         streamSocketListener.onJoinGroupRequest(streamSocketEvent);
     }
 
@@ -209,7 +203,7 @@ public class StreamSocket extends Thread {
         return hashString;
     }
 
-    private boolean isOnListOfClientsConnected(String user_client){
+    private synchronized boolean isOnListOfClientsConnected(String user_client){
         boolean res = false;
         for(int i=0;i<name_of_users_connected.size();i++){
             if(name_of_users_connected.elementAt(i).equals(user_client)){
@@ -217,6 +211,24 @@ public class StreamSocket extends Thread {
             }
         }
         return res;
+    }
+
+    public void disconnectionSocket(){
+        removeClient();
+        connected = false;
+        try {
+            outputStream.close();
+            bufferedReader.close();
+            sct.close();
+        }catch (IOException e){}
+
+    }
+
+    private synchronized void removeClient(){
+        name_of_users_connected.removeElement(user_client);
+    }
+    private synchronized void addClient(){
+        name_of_users_connected.add(user_client);
     }
 
 }
