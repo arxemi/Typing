@@ -6,3 +6,25 @@
 -connessione con database e validazione delle richieste
 -controllo di login, nel caso in cui l'utente sia già online, non potrà essere utilizzata un altra connessione
 con lo stesso nickname
+
+#versione 4.1
+risoluzione bug, migliorie varie
+
+#versione 4.2
+-creazione della classe MessageObject, per rappresenta l'entità con cui i socket scambieranno le informazione
+reciprocamente. La classe MessageObject implementa serializable
+-sostituzione delle classi DataoutputStream e bufferedreader con ObjectOutputStream e ObjectinputStream
+per la gestione dei flussi di oggetti.
+-eliminazione delle strighe per lo scambio di codici si sistema(richiesta di connessione, disconnessione ecc)
+-upgrade dell'interfaccia grafica per la classe windowclient: creazione di tre pannelli, login, signup e chat
+-aggiungata della lista online dei client nelle chat, con aggiornamento in real time dell'elenco
+-customizzate le classi textfield, jbutton e listCell, per ottenere un grafica personalizzata
+-implementazione delle classe clientserviceevent e clientservicelistener per l'interazione client-windowclient
+-utilizzo e adattamento del tema pre installato nimbus
+-versione java supportata 1.6>
+-divisione della struttura logica della classe server, con un thread per gestire le richieste di connessione
+e la classe che si occupa della gestione delle richieste dei varei thread
+-migliorato lo streamsocket, con l'aggiunta di sistemi di sincronizzazione per l'accesso a dati comuni
+-esecuzione delle windowclient e windowserver, addifate al thread di sistema attraverso la classe SwingUtilities
+
+
