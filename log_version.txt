@@ -25,6 +25,6 @@ per la gestione dei flussi di oggetti.
 -divisione della struttura logica della classe server, con un thread per gestire le richieste di connessione
 e la classe che si occupa della gestione delle richieste dei varei thread
 -migliorato lo streamsocket, con l'aggiunta di sistemi di sincronizzazione per l'accesso a dati comuni
--esecuzione delle windowclient e windowserver, addifate al thread di sistema attraverso la classe SwingUtilities
+-esecuzione delle windowclient e windowserver, affidate al thread di sistema attraverso la classe SwingUtilities
 
 
