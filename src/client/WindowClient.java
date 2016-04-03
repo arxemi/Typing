@@ -18,13 +18,14 @@ import java.util.Vector;
  * Progetto iniziato il 16/01/16
  * Sviluppato da acciaro emilio
  * Stato: work in progress
+ * Versione: 4.2
  */
 
 public class WindowClient extends JFrame implements ClientServiceListener{
     //java version supported
     private static final float JAVA_VERSION_SUPPORTED = 1.6F;
     //indirizzo e porta server
-    private final String ADDRESS_NAME = "192.168.1.103";
+    private final String ADDRESS_NAME = "localhost";
     private final int ADDRESS_PORT = 6789;
     //style
     private Font font_temp_title = new Font("Verdana",Font.BOLD,22);
