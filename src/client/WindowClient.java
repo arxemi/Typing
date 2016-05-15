@@ -1,10 +1,7 @@
 package client;
 
-import message.MessageObject;
-import sun.awt.OSInfo;
-
+import kalixdev.info.typing.message.MessageObject;
 import javax.swing.*;
-
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -23,7 +20,7 @@ import java.util.Vector;
 
 public class WindowClient extends JFrame implements ClientServiceListener{
     //java version supported
-    private static final float JAVA_VERSION_SUPPORTED = 1.6F;
+    private static final float JAVA_MIN_VERSION_SUPPORTED = 1.6F;
     //indirizzo e porta server
     private final String ADDRESS_NAME = "localhost";
     private final int ADDRESS_PORT = 6789;
@@ -55,7 +52,7 @@ public class WindowClient extends JFrame implements ClientServiceListener{
     private Client client = null;
 
     public WindowClient(){
-        super("");
+        super("Typing");
         mainPanel.setLayout(cardLayout);
         mainPanel.add(loginPanel, "LOG_IN");
         mainPanel.add(signupPanel, "SIGN_UP");
@@ -132,7 +129,7 @@ public class WindowClient extends JFrame implements ClientServiceListener{
 
     private void init_components_login_panel(){
         //aggiunta componenti al pannello log in
-        JLabel title = new JLabel("Login to chat Room");
+        JLabel title = new JLabel("Login to Typing");
         title.setFont(font_temp_title);
         title.setForeground(color_foreground_title);
         JPanel pnl_north = new JPanel(new FlowLayout(FlowLayout.CENTER,25,15));
@@ -234,7 +231,7 @@ public class WindowClient extends JFrame implements ClientServiceListener{
     }
 
     private void init_components_signup_panel(){
-        JLabel title = new JLabel("Sign up to chat Room");
+        JLabel title = new JLabel("Sign up to Typing");
         title.setFont(font_temp_title);
         title.setForeground(color_foreground_title);
         JPanel pnl_north = new JPanel(new FlowLayout(FlowLayout.CENTER,25,15));
@@ -474,13 +471,9 @@ public class WindowClient extends JFrame implements ClientServiceListener{
 
     public static void main(String[] arg){
         float version = Float.parseFloat(System.getProperty("java.version").substring(0,3));
-        if(version>=JAVA_VERSION_SUPPORTED){
+        if(version>=JAVA_MIN_VERSION_SUPPORTED){
             try {
-                if(OSInfo.getOSType().equals(OSInfo.OSType.WINDOWS)){
-                    javax.swing.UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
-                }else if(OSInfo.getOSType().equals(OSInfo.OSType.LINUX)){
-                    javax.swing.UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
-                }
+                javax.swing.UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
             } catch (Exception e){}
             Runnable init = new Runnable() {
                 public void run() {

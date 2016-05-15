@@ -13,52 +13,77 @@ import java.awt.event.ActionListener;
  * Created by emilio on 20/01/16.
  */
 public class WindowServer extends JFrame {
-    private JPanel globalpanel = new JPanel(new BorderLayout());
-    private JPanel pnl = new JPanel(new FlowLayout(FlowLayout.RIGHT,30,10));
-    private JPanel pnlNumberClients = new JPanel(new FlowLayout(FlowLayout.LEADING,5,5));
-    private JButton btnControl = new JButton("Avvia server");
-    private JLabel lblState = new JLabel("Stato: OFF");
-    private DefaultTableModel dtm = new DefaultTableModel(0, 0){
+
+    //java min version supported
+    private static final float JAVA_MIN_VERSION_SUPPORTED = 1.6F;
+
+    private JButton control_button = new JButton("Start server");
+    private JLabel server_state = new JLabel("STATE: OFF");
+
+    private DefaultTableModel tableModel = new DefaultTableModel(0, 0){
         public boolean isCellEditable(int row, int column) {
             return false;
         }
     };
-    private JTable tbl = new JTable();
 
     private JTextArea txtArea = new JTextArea(5,40);
-    private JLabel numOfClients = new JLabel("Numero di clients: 0");
-    private JScrollPane spnTextArea = new JScrollPane(txtArea);
-    private JScrollPane spnTable = new JScrollPane();
+    private JLabel numOfClients = new JLabel("Number of clients: 0");
+
     private Server mainServer = new Server(6789);
     private Thread serivce;
+
     private boolean serverIsRunning = false;
 
-    public WindowServer(){
-        super("Server - Sistema di controllo");
+    private Color color_background_panel = new Color(41, 38, 40);
+    private Font font_temp_label = new Font("Verdana",Font.BOLD,12);
 
-        dtm.setColumnIdentifiers(new String[]{"Address","Name"});
-        tbl.setModel(dtm);
-        spnTable.getViewport().add(tbl);
+    public WindowServer(){
+        super("Server - Typing panel control");
+
+        JPanel global_panel = new JPanel(new BorderLayout());
+        JPanel pnl_left = new JPanel(new FlowLayout(FlowLayout.RIGHT,10,10));
+        JPanel pnl_right = new JPanel(new FlowLayout(FlowLayout.LEADING,20,5));
+
+        global_panel.setBackground(color_background_panel);
+        pnl_left.setBackground(color_background_panel);
+        pnl_right.setBackground(color_background_panel);
+        control_button.setFont(font_temp_label);
+        numOfClients.setFont(font_temp_label);
+        server_state.setFont(font_temp_label);
+        txtArea.setFont(font_temp_label);
+
+        JTable table = new JTable();
+
+        table.setFont(font_temp_label);
+
+        JScrollPane spnTextArea = new JScrollPane(txtArea);
+        JScrollPane spnTable = new JScrollPane();
+
+        numOfClients.setForeground(Color.WHITE);
+
+        tableModel.setColumnIdentifiers(new String[]{"Address","Username"});
+        table.setModel(tableModel);
+        spnTable.getViewport().add(table);
         add(BorderLayout.EAST,spnTable);
         add(BorderLayout.WEST,spnTextArea);
-        pnlNumberClients.add(numOfClients);
-        pnl.add(lblState);
-        pnl.add(btnControl);
-        globalpanel.add(BorderLayout.WEST,pnlNumberClients);
-        globalpanel.add(BorderLayout.EAST,pnl);
-        add(BorderLayout.SOUTH,globalpanel);
+        pnl_left.add(numOfClients);
+        pnl_right.add(server_state);
+        pnl_right.add(control_button);
+        global_panel.add(BorderLayout.WEST,pnl_left);
+        global_panel.add(BorderLayout.EAST,pnl_right);
+        add(BorderLayout.SOUTH,global_panel);
         txtArea.setEditable(false);
-        lblState.setForeground(Color.RED);
+        server_state.setForeground(Color.RED);
 
         mainServer.addClientListener(new RequestListener() {
             public void onConnectionRequest(RequestEvent e) {
-                dtm.addRow(e.getClientValues());
+                tableModel.addRow(e.getClientValues());
             }
             public void onDisconnectionRequest(RequestEvent e) {
                 if(!e.removeAllClients_)
-                    dtm.removeRow(e.getIndexOfclient());
+                    tableModel.removeRow(e.getIndexOfclient());
                 else{
-                    dtm.setRowCount(0);
+                    tableModel.setRowCount(0);
                 }
             }
         });
@@ -69,11 +94,11 @@ public class WindowServer extends JFrame {
                 txtArea.setCaretPosition(txtArea.getDocument().getLength());
             }
             public void onRequestUpdateViewClients(UpdateViewEvent e) {
-                numOfClients.setText("Numero di clients: "+e.getNumOfClients());
+                numOfClients.setText("Number of clients: "+e.getNumOfClients());
             }
         });
 
-        btnControl.addActionListener(new ActionListener() {
+        control_button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
                 if(!serverIsRunning){
                     txtArea.setText("");
@@ -84,32 +109,45 @@ public class WindowServer extends JFrame {
                     });
                     serivce.start();
                     serverIsRunning = true;
-                    lblState.setText("Stato: ON");
-                    lblState.setForeground(new Color(0,160,0));
-                    btnControl.setText("Arresta Server");
+                    server_state.setText("STATE: ON");
+                    server_state.setForeground(new Color(0,160,0));
+                    control_button.setText("Stop server");
                 }
                 else if(serverIsRunning){
                     mainServer.disconnect();
-                    numOfClients.setText("Numero di clients: 0");
+                    numOfClients.setText("Number of clients: 0");
                     serverIsRunning = false;
-                    lblState.setText("Stato: OFF");
-                    lblState.setForeground(Color.RED);
-                    btnControl.setText("Avvia Server");
+                    server_state.setText("STATE: OFF");
+                    server_state.setForeground(Color.RED);
+                    control_button.setText("Start server");
                 }
             }
         });
         setVisible(true);
-        setSize(920,500);
+        pack();
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
     public static void main(String[] arg){
-        Runnable init  = new Runnable() {
-            public void run() {
-                new WindowServer();
-            }
-        };
-        SwingUtilities.invokeLater(init);
+
+
+        float version = Float.parseFloat(System.getProperty("java.version").substring(0,3));
+        if(version>=JAVA_MIN_VERSION_SUPPORTED){
+            try {
+                javax.swing.UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+            } catch (Exception e){}
+            Runnable init  = new Runnable() {
+                public void run() {
+                    new WindowServer();
+                }
+            };
+            SwingUtilities.invokeLater(init);
+        }else {
+            JOptionPane.showMessageDialog(null,"Warning! Java version not supported!","Java version",
+                    JOptionPane.WARNING_MESSAGE);
+        }
+
+
     }
 }

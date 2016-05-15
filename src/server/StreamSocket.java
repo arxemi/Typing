@@ -1,9 +1,8 @@
 package server;
 
-import message.MessageObject;
+import kalixdev.info.typing.message.MessageObject;
 import server.listener.StreamSocketListener;
 
-import javax.net.ssl.SSLSocket;
 import java.io.*;
 import java.math.BigInteger;
 import java.net.Socket;
@@ -75,13 +74,13 @@ public class StreamSocket extends Thread {
                 if(!isOnListOfClientsConnected(user_client)){
                     sendRequestGroupAdd();
                     addClient();
-                    MessageObject messageObject = new message.MessageObject(message.MessageObject.requestType.REQUEST_VALIDATED);
+                    MessageObject messageObject = new MessageObject(MessageObject.requestType.REQUEST_VALIDATED);
                     messageObject.setMessage("Benvenuto nella chat "+user_client+"!");
                     messageObject.setListOnlineClients(name_of_users_connected);
                     outputStream.writeObject(messageObject);
                     connected = true;
                     while(connected){
-                        message.MessageObject messageObject1 = (message.MessageObject)bufferedReader.readObject();
+                        MessageObject messageObject1 = (MessageObject)bufferedReader.readObject();
                         if(messageObject1.getType().equals(MessageObject.requestType.DISCONNECTION_FROM_CLIENT)){
                             sendDisconnectionRequest();
                             disconnectionSocket();
@@ -177,6 +176,7 @@ public class StreamSocket extends Thread {
     }
 
     private void connectToDB(){
+
         try {
             connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/chat_system","root","toor");
             statement = connection.createStatement();

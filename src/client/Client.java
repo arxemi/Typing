@@ -1,9 +1,7 @@
 package client;
 
-import message.MessageObject;
+import kalixdev.info.typing.message.MessageObject;
 
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.Socket;
 import java.util.Vector;
@@ -15,8 +13,6 @@ public class Client {
     private Socket socket;
     private ObjectOutputStream outputStream;
     private ObjectInputStream bufferedReader;
-    private String indirizzo;
-    private int port;
     private ClientServiceListener clientServiceListener;
     private boolean connected = true;
 
@@ -25,8 +21,6 @@ public class Client {
         MessageObject messageObject = new MessageObject(type);
         messageObject.setUserName(nomeClient);
         messageObject.setUserPsswd(psswd);
-        this.indirizzo = indirizzo;
-        this.port = port;
         socket = new Socket(indirizzo,port);
         outputStream = new ObjectOutputStream(socket.getOutputStream());
         bufferedReader = new ObjectInputStream(socket.getInputStream());
@@ -50,21 +44,21 @@ public class Client {
                         MessageObject objectMessage = (MessageObject)bufferedReader.readObject();
                         switch (objectMessage.getType()){
                             case DISCONNECTION_FROM_SERVER:
-                                sendMessageToWindowClient("COMUNICAZIONE DI SERVIZIO: server unreachable!");
+                                sendMessageToWindowClient("COMMUNICATION SERVICE: server unreachable!");
                                 updateNameOfClientsOnline(MessageObject.requestType.REMOVE_ALL_USERS);
                                 socket.close();
                                 connected = false;
                                 break;
                             case SEND_MESSAGE:
-                                sendMessageToWindowClient(objectMessage.getMessage());
+                                sendMessageToWindowClient(objectMessage.getUserName()+": "+objectMessage.getMessage());
                                 break;
                             case ADD_ONLINE_USER:
                                 updateNameOfClientsOnline(MessageObject.requestType.ADD_ONLINE_USER,objectMessage.getUserName());
-                                sendMessageToWindowClient(objectMessage.getUserName()+" è entrato nella chat!");
+                                sendMessageToWindowClient(objectMessage.getUserName()+" joined to chat!");
                                 break;
                             case REMOVE_ONLINE_USER:
                                 updateNameOfClientsOnline(MessageObject.requestType.REMOVE_ONLINE_USER,objectMessage.getUserName());
-                                sendMessageToWindowClient(objectMessage.getUserName()+" è uscito dalla chat!");
+                                sendMessageToWindowClient(objectMessage.getUserName()+" left from chat!");
                                 break;
                         }
                     }
