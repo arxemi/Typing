@@ -1,4 +1,4 @@
-# chat_system
+# Typing project
 This is a project that implement two different programs. 
 The first is the client program with a specific UI. The second program is the server, 
 that include a simple UI to interact and see what happens when it is in running mod, and others files 
