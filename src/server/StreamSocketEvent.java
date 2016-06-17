@@ -1,14 +1,13 @@
 package server;
 
-import java.net.Socket;
 import java.util.EventObject;
 
 /**
- * Created by emilio on 24/01/16.
+ * @author emilio acciaro on 24/01/16.
  */
 public class StreamSocketEvent extends EventObject {
     private String message;
-    private int IDclient;
+    private int idClient;
     private String nameClient;
     private StreamSocket streamSocket;
 
@@ -20,12 +19,12 @@ public class StreamSocketEvent extends EventObject {
         this.message = stringToServer;
     }
 
-    public void setIDclient(int IDclient){
-        this.IDclient = IDclient;
+    public void setIdClient(int idClient){
+        this.idClient = idClient;
     }
 
-    public int getIDclient(){
-        return IDclient;
+    public int getIdClient(){
+        return idClient;
     }
 
     public String getMessage(){

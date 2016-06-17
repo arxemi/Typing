@@ -3,7 +3,7 @@ package server;
 import java.util.EventObject;
 
 /**
- * Created by emilio on 26/01/16.
+ * @author emilio acciaro on 26/01/16.
  */
 public class UpdateViewEvent extends EventObject {
     private int numOfClients;

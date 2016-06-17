@@ -10,12 +10,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- * Created by emilio on 20/01/16.
+ * @author emilio acciaro on 20/01/16.
  */
+
 public class WindowServer extends JFrame {
 
-    //java min version supported
-    private static final float JAVA_MIN_VERSION_SUPPORTED = 1.6F;
+    //java minimum version supported
+    private static final float MINIMUM_JAVA_VERSION_SUPPORTED = 1.7F;
 
     private JButton control_button = new JButton("Start server");
     private JLabel server_state = new JLabel("STATE: OFF");
@@ -30,15 +31,17 @@ public class WindowServer extends JFrame {
     private JLabel numOfClients = new JLabel("Number of clients: 0");
 
     private Server mainServer = new Server(6789);
-    private Thread serivce;
+    private Thread service;
 
     private boolean serverIsRunning = false;
 
-    private Color color_background_panel = new Color(41, 38, 40);
-    private Font font_temp_label = new Font("Verdana",Font.BOLD,12);
 
-    public WindowServer(){
+
+    private WindowServer(){
         super("Server - Typing panel control");
+
+        final Color color_background_panel = new Color(41, 38, 40);
+        final Font font_temp_label = new Font("Verdana",Font.BOLD,12);
 
         JPanel global_panel = new JPanel(new BorderLayout());
         JPanel pnl_left = new JPanel(new FlowLayout(FlowLayout.RIGHT,10,10));
@@ -80,8 +83,8 @@ public class WindowServer extends JFrame {
                 tableModel.addRow(e.getClientValues());
             }
             public void onDisconnectionRequest(RequestEvent e) {
-                if(!e.removeAllClients_)
-                    tableModel.removeRow(e.getIndexOfclient());
+                if(!e.removeAllClients)
+                    tableModel.removeRow(e.getIndexOfClient());
                 else{
                     tableModel.setRowCount(0);
                 }
@@ -102,18 +105,18 @@ public class WindowServer extends JFrame {
             public void actionPerformed(ActionEvent actionEvent) {
                 if(!serverIsRunning){
                     txtArea.setText("");
-                    serivce = new Thread(new Runnable() {
+                    service = new Thread(new Runnable() {
                         public void run(){
                             mainServer.initServer();
                         }
                     });
-                    serivce.start();
+                    service.start();
                     serverIsRunning = true;
                     server_state.setText("STATE: ON");
                     server_state.setForeground(new Color(0,160,0));
                     control_button.setText("Stop server");
                 }
-                else if(serverIsRunning){
+                else{
                     mainServer.disconnect();
                     numOfClients.setText("Number of clients: 0");
                     serverIsRunning = false;
@@ -131,12 +134,13 @@ public class WindowServer extends JFrame {
 
     public static void main(String[] arg){
 
-
         float version = Float.parseFloat(System.getProperty("java.version").substring(0,3));
-        if(version>=JAVA_MIN_VERSION_SUPPORTED){
+        if(version >= MINIMUM_JAVA_VERSION_SUPPORTED){
             try {
                 javax.swing.UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
-            } catch (Exception e){}
+            } catch (Exception e){
+                e.printStackTrace();
+            }
             Runnable init  = new Runnable() {
                 public void run() {
                     new WindowServer();

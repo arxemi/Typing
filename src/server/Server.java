@@ -6,18 +6,26 @@ import server.listener.RequestListener;
 import server.listener.StreamSocketListener;
 import server.listener.UpdateViewListener;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Vector;
 
-/**
- * Created by emilio on 16/01/16.
- */
-public class Server implements StreamSocketListener {
 
-    private Vector<StreamSocket> arrayStreamSocket = new Vector<StreamSocket>(5);
+/**
+ * @author emilio acciaro on 16/01/16.
+ */
+
+class Server implements StreamSocketListener {
+
+    private Vector<StreamSocket> arrayStreamSocket = new Vector<>(5);
     private ServerSocket serverSocket;
     private int port;
     private boolean connected = false;
@@ -26,19 +34,21 @@ public class Server implements StreamSocketListener {
     private UpdateViewListener updateViewListener;
 
 
-    public Server(int port){
+    Server(int port){
         this.port = port;
         try {
-            //caricamento del driver per la gestione delle connessione con MySql
-            //Class.forName("com.mysql.jdbc.Driver");
             new Driver();
-        }catch (SQLException e){}
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+        initFolders();
     }
 
-    public void initServer(){
+    void initServer(){
         try {
             serverSocket = new ServerSocket(port);
             setLogView("SERVER IS RUNNING\n");
+            writeToLogFile("SERVER STARTED");
             connected = true;
             new Thread(new Runnable() {
                 public void run() {
@@ -49,11 +59,16 @@ public class Server implements StreamSocketListener {
                             addListenerToConnection(temp_socket);
                             temp_socket.start();
                         }
-                    }catch (Exception ex){setLogView("SERVER STOPPED\n");}
+                    }catch (Exception ex){
+                        setLogView("SERVER STOPPED\n");
+                        writeToLogFile("SERVER STOPPED");
+                    }
                 }
             }).start();
-        }catch (Exception e){}
-
+        }catch (Exception e){
+            setLogView("PROBLEMS TO START SERVER\n");
+            writeToLogFile("PROBLEMS TO START SERVER");
+        }
     }
 
     private void addListenerToConnection(StreamSocket streamSocket){
@@ -71,15 +86,19 @@ public class Server implements StreamSocketListener {
                 arrayStreamSocket.add(e.getStreamSocket());
                 arrayStreamSocket.lastElement().setIdConnection(arrayStreamSocket.size()-1);
                 updateNumOfClients(arrayStreamSocket.size());
-                setLogView("ACCEPTED REQUEST FROM "+arrayStreamSocket.lastElement().getSocket().getInetAddress()+'\n');
+                setLogView("ACCEPTED REQUEST FROM "+arrayStreamSocket.lastElement().getSocket().getInetAddress().toString()+'\n');
+                writeToLogFile("ACCEPTED REQUEST FROM "+arrayStreamSocket.lastElement().getSocket().getInetAddress().toString());
                 notificationNewClient(arrayStreamSocket.lastElement().infoClient());
-                MessageObject messageObject = new MessageObject(MessageObject.requestType.ADD_ONLINE_USER);
+                MessageObject messageObject = new MessageObject(MessageObject.RequestType.ADD_ONLINE_USER);
                 messageObject.setUserName(e.getNameClient());
+
                 for(int i=0;i<arrayStreamSocket.size();i++){
                     try {
                         if(!arrayStreamSocket.elementAt(i).getUserClient().equals(e.getNameClient()))
                             arrayStreamSocket.elementAt(i).getOutputStream().writeObject(messageObject);
-                    }catch (IOException ex){}
+                    }catch (IOException ex){
+                        ex.printStackTrace();
+                    }
 
                 }
             }
@@ -95,53 +114,60 @@ public class Server implements StreamSocketListener {
         new Thread(new Runnable() {
             public void run() {
                 setLogView("DISCONNECTION FROM "+e.getNameClient()+'\n');
-                notificationRemoveClient(e.getIDclient());
-                arrayStreamSocket.removeElementAt(e.getIDclient());
+                writeToLogFile("DISCONNECTION FROM "+e.getNameClient());
+                notificationRemoveClient(e.getIdClient());
+                arrayStreamSocket.removeElementAt(e.getIdClient());
                 updateNumOfClients(arrayStreamSocket.size());
-                MessageObject messageObject = new MessageObject(MessageObject.requestType.REMOVE_ONLINE_USER);
+                MessageObject messageObject = new MessageObject(MessageObject.RequestType.REMOVE_ONLINE_USER);
                 messageObject.setUserName(e.getNameClient());
                 for(int i=0;i<arrayStreamSocket.size();i++){
                     arrayStreamSocket.elementAt(i).setIdConnection(i);
                     try {
                         arrayStreamSocket.elementAt(i).getOutputStream().writeObject(messageObject);
-                    }catch (IOException xe){}
-
-                }
-            }
-        }).start();
-    }
-
-    @Override
-    public void onReciveMessage(StreamSocketEvent e) {
-        serviceCommunicationMessage(e);
-    }
-
-    private synchronized void serviceCommunicationMessage(final StreamSocketEvent e){
-        new Thread(new Runnable() {
-            public void run() {
-                setLogView(e.getMessage()+" SEND BY "+
-                        arrayStreamSocket.elementAt(e.getIDclient()).getSocket().getInetAddress()+" USERNAME: "+
-                        arrayStreamSocket.elementAt(e.getIDclient()).getUserClient().toUpperCase()+'\n');
-                for(int i=0;i<arrayStreamSocket.size();i++){
-                    if(i != e.getIDclient()){
-                        try {
-                            MessageObject messageObject = new MessageObject(MessageObject.requestType.SEND_MESSAGE);
-                            messageObject.setUserName(e.getNameClient());
-                            messageObject.setMessage(e.getMessage());
-                            arrayStreamSocket.elementAt(i).getOutputStream().writeObject(messageObject);
-                        }catch (Exception ex){}
+                    }catch (IOException xe){
+                        xe.printStackTrace();
                     }
                 }
             }
         }).start();
     }
 
-    public void disconnect(){
+    @Override
+    public void onReceiveMessage(StreamSocketEvent e) {
+        serviceCommunicationMessage(e);
+    }
+
+    private synchronized void serviceCommunicationMessage(final StreamSocketEvent e){
+        new Thread(new Runnable() {
+            public void run() {
+                String log = e.getMessage()+" SEND BY "+
+                        arrayStreamSocket.elementAt(e.getIdClient()).getSocket().getInetAddress().toString()+" USERNAME: "+
+                        arrayStreamSocket.elementAt(e.getIdClient()).getUserClient().toUpperCase();
+                setLogView(log+'\n');
+                writeToLogFile(log);
+                for(int i=0;i<arrayStreamSocket.size();i++){
+                    if(i != e.getIdClient()){
+                        try {
+                            MessageObject messageObject = new MessageObject(MessageObject.RequestType.SEND_MESSAGE);
+                            messageObject.setUserName(e.getNameClient());
+                            messageObject.setMessage(e.getMessage());
+                            arrayStreamSocket.elementAt(i).getOutputStream().writeObject(messageObject);
+                        }catch (Exception ex){
+                            ex.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }).start();
+    }
+
+    void disconnect(){
         try {
             serverSocket.close();
             connected = false;
             for(int i=0;i<arrayStreamSocket.size();i++){
-                arrayStreamSocket.elementAt(i).getOutputStream().writeObject(new MessageObject(MessageObject.requestType.DISCONNECTION_FROM_SERVER));
+                arrayStreamSocket.elementAt(i).getOutputStream()
+                        .writeObject(new MessageObject(MessageObject.RequestType.DISCONNECTION_FROM_SERVER));
                 arrayStreamSocket.elementAt(i).disconnectionSocket();
             }
             arrayStreamSocket.removeAllElements();
@@ -154,15 +180,15 @@ public class Server implements StreamSocketListener {
 
     }
 
-    public void addClientListener(RequestListener requestListener){
+    void addClientListener(RequestListener requestListener){
         this.requestListener = requestListener;
     }
-    public void addUpdateViewListener(UpdateViewListener updateViewListener){this.updateViewListener = updateViewListener;}
+    void addUpdateViewListener(UpdateViewListener updateViewListener){this.updateViewListener = updateViewListener;}
 
-    private void notificationNewClient(String[] infoCliet){
+    private void notificationNewClient(String[] infoClient){
         RequestEvent requestEvent = new RequestEvent(this);
-        requestEvent.setAddress(infoCliet[0]);
-        requestEvent.setName(infoCliet[1]);
+        requestEvent.setAddress(infoClient[0]);
+        requestEvent.setName(infoClient[1]);
         requestListener.onConnectionRequest(requestEvent);
     }
 
@@ -180,7 +206,7 @@ public class Server implements StreamSocketListener {
 
     private void notificationRemoveClient(int i){
         RequestEvent requestEvent = new RequestEvent(this);
-        requestEvent.setIndexOfclient(i);
+        requestEvent.setIndexOfClient(i);
         requestListener.onDisconnectionRequest(requestEvent);
     }
 
@@ -188,5 +214,64 @@ public class Server implements StreamSocketListener {
         RequestEvent requestEvent = new RequestEvent(this);
         requestEvent.removeAllClients();
         requestListener.onDisconnectionRequest(requestEvent);
+    }
+
+    private void initFolders(){
+        String OS = System.getProperty("os.name").toLowerCase();
+
+        if (OS.contains("win")) {
+            Path path = Paths.get("C:\\typing\\log");
+            if(!Files.exists(path)){
+                try {
+                    Files.createDirectories(path);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            Path path = Paths.get("/etc/typing/log");
+            if(!Files.exists(path)){
+                try {
+                    Files.createDirectories(path);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private void writeToLogFile(final String log){
+        final Calendar calendar = Calendar.getInstance();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                FileWriter fileWriter = null;
+                try {
+                    calendar.setTime(new Date(System.currentTimeMillis()));
+                    if(!System.getProperty("os.name").toLowerCase().contains("win"))
+                        fileWriter = new FileWriter("/etc/typing/log/typing_server_log.txt",true);
+                    else
+                        fileWriter = new FileWriter("C:\\typing\\log\\typing_server_log.txt",true);
+
+                    fileWriter.write(
+                            log.toUpperCase()
+                            + "\n\t At " + calendar.get(Calendar.HOUR_OF_DAY) + "-" + calendar.get(Calendar.MINUTE)
+                            + " In " + calendar.get(Calendar.DAY_OF_MONTH) + "/" + calendar.get(Calendar.MONTH) + "/"
+                                    + calendar.get(Calendar.YEAR)
+                            +"\n");
+
+                }catch (Exception e){
+                    e.printStackTrace();
+                }finally {
+                    try {
+                        if(fileWriter != null)
+                            fileWriter.close();
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+
+                }
+            }
+        }).start();
     }
 }

@@ -1,55 +1,65 @@
 package kalixdev.info.typing.message;
 
 import java.io.Serializable;
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
- * Created by kalix on 3/22/16.
+ * @author emilio acciaro on 3/22/16.
  */
+
 public class MessageObject implements Serializable{
 
     static final long serialVersionUID = 123456789123456789L;
 
-    private Vector<String> list_clients_online = null;
+    private ArrayList<String> onlineClients;
     private String message;
-    private String userName = null;
-    private String userPsswd;
-    private requestType type;
+    private String userName;
+    private String userPassword;
+    private RequestType type;
 
-    public enum requestType{
+    public enum RequestType{
         LOG_IN, SIGN_UP, SEND_MESSAGE, ADD_ONLINE_USER, REMOVE_ONLINE_USER, REQUEST_VALIDATED, REQUEST_NOT_VALIDATED,
         USER_ALREADY_CONNECTED, DISCONNECTION_FROM_CLIENT, DISCONNECTION_FROM_SERVER, REMOVE_ALL_USERS
     }
 
-    public MessageObject(requestType type){
+    public MessageObject(RequestType type){
         this.type = type;
     }
+
     public void setMessage(String message){
         this.message = message;
     }
+
     public void setUserName(String userName){
         this.userName = userName;
     }
-    public void setUserPsswd(String userPsswd){
-        this.userPsswd = userPsswd;
+
+    public void setUserPassword(String userPassword){
+        this.userPassword = userPassword;
     }
-    public void setListOnlineClients(Vector<String> clients_online){
-        this.list_clients_online = clients_online;
+
+    public void setListOnlineClients(ArrayList<String> clients_online){
+        this.onlineClients = clients_online;
     }
+
     public String getUserName(){
         return userName;
     }
-    public String getUserPsswd(){
-        return userPsswd;
+
+    public String getUserPassword(){
+        return userPassword;
     }
+
     public String getMessage(){
         return message;
     }
-    public requestType getType(){
+
+    public RequestType getType(){
         return type;
     }
-    public Vector<String> getListOnlineClients(){
-        return list_clients_online;
+
+    public ArrayList<String> getListOnlineClients(){
+        return onlineClients;
     }
 
 }

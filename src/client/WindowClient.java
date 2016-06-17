@@ -1,29 +1,32 @@
 package client;
 
+import client.custom.CustomListCell;
+import client.custom.CustomTextField;
 import kalixdev.info.typing.message.MessageObject;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Vector;
+import java.util.Properties;
 
 /**
+ *
  * Progetto iniziato il 16/01/16
- * Sviluppato da acciaro emilio
- * Stato: work in progress
- * Versione: 4.2
+ * @author emilio acciaro aka @kalixdev
+ * Stato: ultimated
+ * Versione: 5
+ *
  */
 
 public class WindowClient extends JFrame implements ClientServiceListener{
     //java version supported
     private static final float JAVA_MIN_VERSION_SUPPORTED = 1.6F;
     //indirizzo e porta server
-    private final String ADDRESS_NAME = "localhost";
+    private String ADDRESS_NAME;
     private final int ADDRESS_PORT = 6789;
+
     //style
     private Font font_temp_title = new Font("Verdana",Font.BOLD,22);
     private Font font_temp_btn = new Font("Verdana",Font.BOLD,20);
@@ -34,7 +37,6 @@ public class WindowClient extends JFrame implements ClientServiceListener{
     private Color color_background_btn = new Color(255, 102, 0);
     private Color color_background_btn_hover = new Color(166, 73, 0);
     private Color color_foreground_btn = Color.WHITE;
-    //private Color color_foreground_hover_lbl = new Color(79, 102,255);
     private Color color_foreground_hover_lbl = new Color(0x196DC0);
     private Dimension btn_size = new Dimension(205,35);
 
@@ -51,8 +53,11 @@ public class WindowClient extends JFrame implements ClientServiceListener{
     //private boolean connection_status = false;
     private Client client = null;
 
-    public WindowClient(){
+    private WindowClient(){
         super("Typing");
+
+        getAddressFromProperties();
+
         mainPanel.setLayout(cardLayout);
         mainPanel.add(loginPanel, "LOG_IN");
         mainPanel.add(signupPanel, "SIGN_UP");
@@ -76,40 +81,50 @@ public class WindowClient extends JFrame implements ClientServiceListener{
               @Override
               public void windowClosing(WindowEvent e) {
                   super.windowClosing(e);
-                  if(client instanceof Client)
-                      client.disconnect(MessageObject.requestType.DISCONNECTION_FROM_CLIENT);
+                  if(client != null)
+                      client.disconnect(MessageObject.RequestType.DISCONNECTION_FROM_CLIENT);
 
               }
         });
     }
 
     private void initConnection(String welcome){
-        outputMessage.append(welcome + "\n");
+        outputMessage.append(welcome + "\n\n");
         outputMessage.setCaretPosition(outputMessage.getDocument().getLength());
         client.setClientServiceListener(this);
         client.startClientService();
     }
 
     @Override
-    public void onReciveMessageFromServer(ClientServiceEvent e) {
-        outputMessage.append(e.getMessage()+"\n");
+    public void onReceiveCriticalMessageFromServer(ClientServiceEvent e) {
+        int replay = JOptionPane.showConfirmDialog(null,e.getMessage(),"Connection troubles",
+                JOptionPane.DEFAULT_OPTION,JOptionPane.WARNING_MESSAGE);
+        if(replay == 0 || replay == 1){
+            dispose();
+            WindowClient.createWindow();
+        }
+    }
+
+    @Override
+    public void onReceiveMessageFromServer(ClientServiceEvent e) {
+        outputMessage.append(e.getMessage()+"\n\n");
         outputMessage.setCaretPosition(outputMessage.getDocument().getLength());
     }
 
     @Override
     public void addClientToList(ClientServiceEvent e) {
-        if(e.getClientsOnline() instanceof Vector){
-            for(int i=0;i<e.getClientsOnline().size();i++){
-                defaultListModel.addElement(e.getClientsOnline().elementAt(i));
+        if(e.getClientsOnline() != null){
+            for(String client : e.getClientsOnline()){
+                defaultListModel.addElement(client);
             }
-        }else if(e.getNameClient() instanceof String){
+        }else if(e.getNameClient() != null){
             defaultListModel.addElement(e.getNameClient());
         }
     }
 
     @Override
     public void removeClientFromList(ClientServiceEvent e) {
-        if(e.getNameClient() instanceof String){
+        if(e.getNameClient() != null){
             for(int i=0;i<defaultListModel.getSize();i++){
                 if(defaultListModel.getElementAt(i).equals(e.getNameClient())){
                     defaultListModel.removeElementAt(i);
@@ -122,7 +137,7 @@ public class WindowClient extends JFrame implements ClientServiceListener{
 
     }
 
-    private void initDisconnection(MessageObject.requestType type){
+    private void initDisconnection(MessageObject.RequestType type){
         client.disconnect(type);
         client = null;
     }
@@ -180,28 +195,33 @@ public class WindowClient extends JFrame implements ClientServiceListener{
             }
             public void mouseClicked(MouseEvent e) {
                 try {
-                    client = new Client(ADDRESS_NAME,ADDRESS_PORT,txt_user.getText(),new String(txt_psswd.getPassword()), MessageObject.requestType.LOG_IN);
+                    client = new Client(ADDRESS_NAME,ADDRESS_PORT,txt_user.getText(),new String(txt_psswd.getPassword()),
+                            MessageObject.RequestType.LOG_IN);
                     MessageObject messageObject = client.getResponseFromServer();
                     switch (messageObject.getType()){
                         case REQUEST_VALIDATED:
                             initConnection(messageObject.getMessage());
-                            client.updateNameOfClientsOnline(MessageObject.requestType.ADD_ONLINE_USER,messageObject.getListOnlineClients());
+                            client.updateNameOfClientsOnline(MessageObject.RequestType.ADD_ONLINE_USER,messageObject.getListOnlineClients());
                             cardLayout.show(mainPanel,"CHAT");
                             pack();
                             setLocationRelativeTo(null);
                             break;
                         case REQUEST_NOT_VALIDATED:
-                            JOptionPane.showMessageDialog(null,"Login non effettuato, controllare i paramentri inseriti!","Errore",JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(null,"Login non effettuato, controllare i paramentri inseriti!",
+                                    "Errore",JOptionPane.ERROR_MESSAGE);
                             break;
                         case USER_ALREADY_CONNECTED:
-                            JOptionPane.showMessageDialog(null,"L'utente risulta già connesso nella chat!","Attenzione",JOptionPane.WARNING_MESSAGE);
+                            JOptionPane.showMessageDialog(null,"L'utente risulta già connesso nella chat!",
+                                    "Attenzione",JOptionPane.WARNING_MESSAGE);
                             break;
                         default:
-                            JOptionPane.showMessageDialog(null,"Attenzione, problemi con la connessione al server!","Connessione",JOptionPane.WARNING_MESSAGE);
+                            JOptionPane.showMessageDialog(null,"Attenzione, problemi con la connessione al server!",
+                                    "Connessione",JOptionPane.WARNING_MESSAGE);
                             break;
                     }
                 }catch (Exception e1){
-                    JOptionPane.showMessageDialog(null,"Attenzione, problemi con la connessione al server!","Connessione",JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(null,"Attenzione, problemi con la connessione al server!",
+                            "Connessione",JOptionPane.WARNING_MESSAGE);
                 }
             }
         });
@@ -298,28 +318,36 @@ public class WindowClient extends JFrame implements ClientServiceListener{
             public void mouseClicked(MouseEvent e) {
                 if(txt_user.getText().length()>1){
                     try {
-                        client = new Client(ADDRESS_NAME,ADDRESS_PORT,txt_user.getText(),new String(txt_psswd.getPassword()), MessageObject.requestType.SIGN_UP);
+                        client = new Client(ADDRESS_NAME,ADDRESS_PORT,txt_user.getText(),new String(txt_psswd.getPassword()),
+                                MessageObject.RequestType.SIGN_UP);
                         MessageObject messageObject = client.getResponseFromServer();
                         switch (messageObject.getType()){
                             case REQUEST_VALIDATED:
                                 initConnection(messageObject.getMessage());
-                                client.updateNameOfClientsOnline(MessageObject.requestType.ADD_ONLINE_USER,messageObject.getListOnlineClients());
+                                client.updateNameOfClientsOnline(MessageObject.RequestType.ADD_ONLINE_USER,
+                                        messageObject.getListOnlineClients());
                                 cardLayout.show(mainPanel,"CHAT");
                                 pack();
                                 setLocationRelativeTo(null);
                                 break;
                             case REQUEST_NOT_VALIDATED:
-                                JOptionPane.showMessageDialog(null,"Esiste già un utente con questo nome!","Attenzione",JOptionPane.WARNING_MESSAGE);
+                                JOptionPane.showMessageDialog(null,"Esiste già un utente con questo nome!","Attenzione",
+                                        JOptionPane.WARNING_MESSAGE);
                                 break;
                             default:
-                                JOptionPane.showMessageDialog(null,"Attenzione, problemi con la connessione al server!","Connessione",JOptionPane.WARNING_MESSAGE);
+                                JOptionPane.showMessageDialog(null,"Attenzione, problemi con la connessione al server!",
+                                        "Connessione",JOptionPane.WARNING_MESSAGE);
                                 break;
                         }
                     }catch (Exception e1){
-                        JOptionPane.showMessageDialog(null,"Attenzione, problemi con la connessione al server!","Connessione",JOptionPane.WARNING_MESSAGE);
+                        JOptionPane.showMessageDialog(null,"Attenzione, problemi con la connessione al server!","Connessione",
+                                JOptionPane.WARNING_MESSAGE);
                     }
                 }else {
-                    JOptionPane.showMessageDialog(null,"Attenzione, sembra che alcuni campi non siano inseriti e/o le password non coincidano!","Parametri",JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(null,
+                            "Attenzione, sembra che alcuni campi non siano inseriti e/o le password non coincidano!",
+                            "Parametri",
+                            JOptionPane.WARNING_MESSAGE);
                 }
 
             }
@@ -384,7 +412,7 @@ public class WindowClient extends JFrame implements ClientServiceListener{
         lbl_online_clients.setFont(new Font("Verdana",Font.BOLD,14));
         pnl_left.add(lbl_online_clients);
 
-        final JList<String> online_clients_list = new JList<String>(defaultListModel);
+        final JList<String> online_clients_list = new JList<>(defaultListModel);
         online_clients_list.setFixedCellWidth(100);
         online_clients_list.setFixedCellHeight(30);
 
@@ -402,19 +430,39 @@ public class WindowClient extends JFrame implements ClientServiceListener{
                 String stringa = txt_input_message.getText();
                 if(stringa.length() > 0 && !stringa.isEmpty()){
                     try {
-                        MessageObject messageObject = new MessageObject(MessageObject.requestType.SEND_MESSAGE);
+                        MessageObject messageObject = new MessageObject(MessageObject.RequestType.SEND_MESSAGE);
                         messageObject.setMessage(stringa);
                         client.getOutputStream().writeObject(messageObject);
-                        outputMessage.append("TU: "+stringa+"\n");
+                        outputMessage.append("TU: "+stringa+"\n\n");
                         outputMessage.setCaretPosition(outputMessage.getDocument().getLength());
                         txt_input_message.customizeText(" Scrivi qualcosa");
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }
                 }
-
             }
         });
+
+        txt_input_message.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                String stringa = txt_input_message.getText();
+                if(stringa.length() > 0 && !stringa.isEmpty()){
+                    try {
+                        MessageObject messageObject = new MessageObject(MessageObject.RequestType.SEND_MESSAGE);
+                        messageObject.setMessage(stringa);
+                        client.getOutputStream().writeObject(messageObject);
+                        outputMessage.append("TU: "+stringa+"\n");
+                        outputMessage.setCaretPosition(outputMessage.getDocument().getLength());
+                        txt_input_message.customizeText(" Scrivi qualcosa");
+                        outputMessage.requestFocus();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        });
+
 
         JScrollPane scrollPane_online_clients = new JScrollPane();
         scrollPane_online_clients.getViewport().setView(online_clients_list);
@@ -430,12 +478,11 @@ public class WindowClient extends JFrame implements ClientServiceListener{
             public void mouseClicked(MouseEvent e) {
                 int replay = JOptionPane.showConfirmDialog(null,"Sicuro di voler chiudere la connessione?","Logout",JOptionPane.OK_CANCEL_OPTION,JOptionPane.QUESTION_MESSAGE);
                 if(replay==0){
-                    initDisconnection(MessageObject.requestType.DISCONNECTION_FROM_CLIENT);
+                    initDisconnection(MessageObject.RequestType.DISCONNECTION_FROM_CLIENT);
                     defaultListModel.removeAllElements();
                     outputMessage.setText("");
-                    cardLayout.show(mainPanel,"LOG_IN");
-                    pack();
-                    setLocationRelativeTo(null);
+                    dispose();
+                    WindowClient.createWindow();
                 }
 
             }
@@ -469,12 +516,43 @@ public class WindowClient extends JFrame implements ClientServiceListener{
 
     }
 
-    public static void main(String[] arg){
+    // get data from typing.properties
+
+    private void getAddressFromProperties() {
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Properties mainProperties = new Properties();
+
+                    String path = "./typing.properties";
+
+                    FileInputStream file = new FileInputStream(path);
+
+                    mainProperties.load(file);
+
+                    file.close();
+
+                    //retrieve the property we are intrested, the app.version
+                    ADDRESS_NAME = mainProperties.getProperty("app.address");
+                }catch (IOException e){
+                    e.printStackTrace();
+                }
+
+            }
+        }).start();
+
+    }
+
+    private static void createWindow(){
         float version = Float.parseFloat(System.getProperty("java.version").substring(0,3));
         if(version>=JAVA_MIN_VERSION_SUPPORTED){
             try {
                 javax.swing.UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
-            } catch (Exception e){}
+            } catch (Exception e){
+                e.printStackTrace();
+            }
             Runnable init = new Runnable() {
                 public void run() {
                     new WindowClient();
@@ -485,7 +563,10 @@ public class WindowClient extends JFrame implements ClientServiceListener{
             JOptionPane.showMessageDialog(null,"Errore, versione di java non supportata!","Errore java version",
                     JOptionPane.WARNING_MESSAGE);
         }
+    }
 
+    public static void main(String[] arg){
+        createWindow();
     }
 
     private class PageViewer extends CardLayout {
@@ -502,7 +583,7 @@ public class WindowClient extends JFrame implements ClientServiceListener{
             return super.preferredLayoutSize(parent);
         }
 
-        public Component findCurrentComponent(Container parent) {
+        Component findCurrentComponent(Container parent) {
             for (Component comp : parent.getComponents()) {
                 if (comp.isVisible()) {
                     return comp;

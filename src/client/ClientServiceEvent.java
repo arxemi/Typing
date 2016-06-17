@@ -1,37 +1,42 @@
 package client;
 
+import java.util.ArrayList;
 import java.util.EventObject;
-import java.util.Vector;
 
 /**
- * Created by kalix on 3/25/16.
+ * @author emilio acciaro on 3/25/16.
  */
-public class ClientServiceEvent extends EventObject {
+
+class ClientServiceEvent extends EventObject {
     private String message;
-    // nome client da aggiornare nella JList
     private String nameClient;
-    private Vector<String> clientsOnline;
-    public ClientServiceEvent(Object e){
+    private ArrayList<String> clientsOnline;
+
+    ClientServiceEvent(Object e){
         super(e);
     }
-    public void setMessage(String message){
+
+    void setMessage(String message){
         this.message=message;
     }
-    public String getMessage(){
+
+    String getMessage(){
         return message;
     }
-    public void setNameClient(String nameClient){
+
+    void setNameClient(String nameClient){
         this.nameClient = nameClient;
     }
-    public String getNameClient(){
+
+    String getNameClient(){
         return nameClient;
     }
 
-    public void setClientsOnline(Vector<String> clientsOnline) {
+    void setClientsOnline(ArrayList<String> clientsOnline) {
         this.clientsOnline = clientsOnline;
     }
 
-    public Vector<String> getClientsOnline() {
+    ArrayList<String> getClientsOnline() {
         return clientsOnline;
     }
 }
