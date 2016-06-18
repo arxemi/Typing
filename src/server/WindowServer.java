@@ -8,6 +8,11 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.UnknownHostException;
+import java.util.Enumeration;
 
 /**
  * @author emilio acciaro on 20/01/16.
@@ -29,6 +34,7 @@ public class WindowServer extends JFrame {
 
     private JTextArea txtArea = new JTextArea(5,40);
     private JLabel numOfClients = new JLabel("Number of clients: 0");
+    private JLabel addressPc = new JLabel("address");
 
     private Server mainServer = new Server(6789);
     private Thread service;
@@ -43,38 +49,65 @@ public class WindowServer extends JFrame {
         final Color color_background_panel = new Color(41, 38, 40);
         final Font font_temp_label = new Font("Verdana",Font.BOLD,12);
 
-        JPanel global_panel = new JPanel(new BorderLayout());
-        JPanel pnl_left = new JPanel(new FlowLayout(FlowLayout.RIGHT,10,10));
-        JPanel pnl_right = new JPanel(new FlowLayout(FlowLayout.LEADING,20,5));
+        JPanel globalPanel = new JPanel(new BorderLayout());
+        JPanel panelLeft = new JPanel(new FlowLayout(FlowLayout.RIGHT,10,10));
+        JPanel panelRight = new JPanel(new FlowLayout(FlowLayout.LEADING,20,5));
+        JPanel panelCenter = new JPanel(new FlowLayout(FlowLayout.CENTER,10,10));
 
-        global_panel.setBackground(color_background_panel);
-        pnl_left.setBackground(color_background_panel);
-        pnl_right.setBackground(color_background_panel);
         control_button.setFont(font_temp_label);
         numOfClients.setFont(font_temp_label);
         server_state.setFont(font_temp_label);
+        addressPc.setFont(font_temp_label);
         txtArea.setFont(font_temp_label);
 
         JTable table = new JTable();
-
         table.setFont(font_temp_label);
+        table.setModel(tableModel);
 
         JScrollPane spnTextArea = new JScrollPane(txtArea);
         JScrollPane spnTable = new JScrollPane();
 
         numOfClients.setForeground(Color.WHITE);
+        addressPc.setForeground(Color.WHITE);
 
         tableModel.setColumnIdentifiers(new String[]{"Address","Username"});
-        table.setModel(tableModel);
+
         spnTable.getViewport().add(table);
+
         add(BorderLayout.EAST,spnTable);
         add(BorderLayout.WEST,spnTextArea);
-        pnl_left.add(numOfClients);
-        pnl_right.add(server_state);
-        pnl_right.add(control_button);
-        global_panel.add(BorderLayout.WEST,pnl_left);
-        global_panel.add(BorderLayout.EAST,pnl_right);
-        add(BorderLayout.SOUTH,global_panel);
+
+        panelLeft.setBackground(color_background_panel);
+        panelLeft.add(numOfClients);
+
+        panelCenter.setBackground(color_background_panel);
+        try {
+            Enumeration en = NetworkInterface.getNetworkInterfaces();
+            while(en.hasMoreElements()){
+                NetworkInterface ni=(NetworkInterface) en.nextElement();
+                Enumeration ee = ni.getInetAddresses();
+                while(ee.hasMoreElements()) {
+                    InetAddress ia= (InetAddress) ee.nextElement();
+                    if(!ia.isLoopbackAddress() && !ia.isLinkLocalAddress())
+                        addressPc.setText("IP address: "+ia.getHostAddress());
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        panelCenter.add(addressPc);
+
+        panelRight.setBackground(color_background_panel);
+        panelRight.add(server_state);
+        panelRight.add(control_button);
+
+        globalPanel.add(BorderLayout.WEST, panelLeft);
+        globalPanel.add(BorderLayout.EAST, panelRight);
+        globalPanel.add(BorderLayout.CENTER, panelCenter);
+        globalPanel.setBackground(color_background_panel);
+
+        add(BorderLayout.SOUTH, globalPanel);
+
         txtArea.setEditable(false);
         server_state.setForeground(Color.RED);
 

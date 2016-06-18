@@ -208,7 +208,7 @@ class Server implements StreamSocketListener {
     private synchronized void serviceCommunicationMessage(final StreamSocketEvent e){
         new Thread(new Runnable() {
             public void run() {
-                String log = e.getMessage()+" SEND BY "+
+                String log = e.getMessage()+" SENT BY "+
                         arrayStreamSocket.elementAt(e.getIdClient()).getSocket().getInetAddress().toString()+" USERNAME: "+
                         arrayStreamSocket.elementAt(e.getIdClient()).getUserClient().toUpperCase();
                 setLogView(log+'\n');
