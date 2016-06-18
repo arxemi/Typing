@@ -11,39 +11,39 @@ public class StreamSocketEvent extends EventObject {
     private String nameClient;
     private StreamSocket streamSocket;
 
-    public StreamSocketEvent(Object e){
+    StreamSocketEvent(Object e){
         super(e);
     }
 
-    public void setMessage(String stringToServer){
+    void setMessage(String stringToServer){
         this.message = stringToServer;
     }
 
-    public void setIdClient(int idClient){
+    void setIdClient(int idClient){
         this.idClient = idClient;
     }
 
-    public int getIdClient(){
+    int getIdClient(){
         return idClient;
     }
 
-    public String getMessage(){
+    String getMessage(){
         return message;
     }
 
-    public void setNameClient(String nameClient){
+    void setNameClient(String nameClient){
         this.nameClient = nameClient;
     }
 
-    public void setStreamSocket(StreamSocket streamSocket){
+    void setStreamSocket(StreamSocket streamSocket){
         this.streamSocket = streamSocket;
     }
 
-    public StreamSocket getStreamSocket(){
+    StreamSocket getStreamSocket(){
         return streamSocket;
     }
 
-    public String getNameClient(){
+    String getNameClient(){
         return nameClient;
     }
 }

@@ -42,6 +42,13 @@ class StreamSocket extends Thread {
         }
     }
 
+    /**
+     * This method validate the credential sent by user client
+     * @return true if the request is validated, else false
+     * @throws Exception
+     * @see StreamSocket#doLogin(String, String)
+     * @see StreamSocket#doSignup(String, String)
+     */
     private boolean validateRequestType()throws Exception{
 
         boolean request = false;

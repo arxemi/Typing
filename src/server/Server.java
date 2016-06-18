@@ -33,7 +33,14 @@ class Server implements StreamSocketListener {
     private RequestListener requestListener;
     private UpdateViewListener updateViewListener;
 
-
+    /**
+     * Default constructor that initialize port variable, create a new instance of {@link Driver}
+     * and execute method initFolders
+     *
+     * @param port credential to running a server on a specific port
+     * @see Server#initFolders()
+     * @see Driver
+     */
     Server(int port){
         this.port = port;
         try {
@@ -44,6 +51,13 @@ class Server implements StreamSocketListener {
         initFolders();
     }
 
+    /**
+     * This is linked to {@link WindowServer}, so when user click on START button
+     * it will be execute
+     * This method allow to receive request for a large number of clients
+     * Than, when has been received a request, the instance will be pass to {@link StreamSocket}
+     * @see ServerSocket
+     */
     void initServer(){
         try {
             serverSocket = new ServerSocket(port);
@@ -71,23 +85,44 @@ class Server implements StreamSocketListener {
         }
     }
 
+    /**
+     * This method allow to attach this class to {@link StreamSocket}
+     * @param streamSocket this is a {@link StreamSocket} object
+     */
     private void addListenerToConnection(StreamSocket streamSocket){
         streamSocket.addSocketListener(this);
     }
 
+    /**
+     * This is a callback method, implemented by {@link StreamSocketListener}
+     * This will be execute when an instance of {@link StreamSocket} will require to join into chat
+     * @param e specific Event object that include information about sender;
+     *
+     * @see StreamSocketListener
+     * @see StreamSocket
+     * @see StreamSocketEvent
+     */
     @Override
     public void onJoinGroupRequest(StreamSocketEvent e) {
         serviceJoinGroupRequest(e);
     }
 
+    /**
+     * This method will be called after onJoinGroupRequest to consuming the specific request from {@link StreamSocket}
+     * @param e specific Event object that include information about sender;
+     *
+     * @see StreamSocketEvent
+     */
     private synchronized void serviceJoinGroupRequest(final StreamSocketEvent e){
         new Thread(new Runnable() {
             public void run() {
                 arrayStreamSocket.add(e.getStreamSocket());
                 arrayStreamSocket.lastElement().setIdConnection(arrayStreamSocket.size()-1);
                 updateNumOfClients(arrayStreamSocket.size());
+
                 setLogView("ACCEPTED REQUEST FROM "+arrayStreamSocket.lastElement().getSocket().getInetAddress().toString()+'\n');
                 writeToLogFile("ACCEPTED REQUEST FROM "+arrayStreamSocket.lastElement().getSocket().getInetAddress().toString());
+
                 notificationNewClient(arrayStreamSocket.lastElement().infoClient());
                 MessageObject messageObject = new MessageObject(MessageObject.RequestType.ADD_ONLINE_USER);
                 messageObject.setUserName(e.getNameClient());
@@ -105,19 +140,37 @@ class Server implements StreamSocketListener {
         }).start();
     }
 
+    /**
+     * This is a callback method, implemented by {@link StreamSocketListener}
+     * This will be execute when an instance of {@link StreamSocket} will require to disconnect from chat
+     * @param e specific Event object that include information about sender;
+     *
+     * @see StreamSocketListener
+     * @see StreamSocket
+     * @see StreamSocketEvent
+     */
     @Override
     public void onRequestDeleteConnection(StreamSocketEvent e) {
         serviceCommunicationDeleting(e);
     }
 
+    /**
+     * This method will be called after onRequestDeleteConnection to consuming the specific request from {@link StreamSocket}
+     * @param e specific Event object that include information about sender;
+     *
+     * @see StreamSocketEvent
+     */
     private synchronized void serviceCommunicationDeleting(final StreamSocketEvent e){
         new Thread(new Runnable() {
             public void run() {
+
                 setLogView("DISCONNECTION FROM "+e.getNameClient()+'\n');
                 writeToLogFile("DISCONNECTION FROM "+e.getNameClient());
+
                 notificationRemoveClient(e.getIdClient());
                 arrayStreamSocket.removeElementAt(e.getIdClient());
                 updateNumOfClients(arrayStreamSocket.size());
+
                 MessageObject messageObject = new MessageObject(MessageObject.RequestType.REMOVE_ONLINE_USER);
                 messageObject.setUserName(e.getNameClient());
                 for(int i=0;i<arrayStreamSocket.size();i++){
@@ -132,11 +185,26 @@ class Server implements StreamSocketListener {
         }).start();
     }
 
+    /**
+     * This is a callback method, implemented by {@link StreamSocketListener}
+     * This will be execute when an instance of {@link StreamSocket} will require to send a message to chat
+     * @param e specific Event object that include information about sender;
+     *
+     * @see StreamSocketListener
+     * @see StreamSocket
+     * @see StreamSocketEvent
+     */
     @Override
     public void onReceiveMessage(StreamSocketEvent e) {
         serviceCommunicationMessage(e);
     }
 
+    /**
+     * This method will be called after onReceiveMessage to consuming the specific request from {@link StreamSocket}
+     * @param e specific Event object that include information about sender;
+     *
+     * @see StreamSocketEvent
+     */
     private synchronized void serviceCommunicationMessage(final StreamSocketEvent e){
         new Thread(new Runnable() {
             public void run() {
@@ -161,6 +229,11 @@ class Server implements StreamSocketListener {
         }).start();
     }
 
+    /**
+     * This is linked to {@link WindowServer}, so when user click on STOP button
+     * it will be execute
+     * This method allow to disconnect che server and to close all communications whit {@link StreamSocket}
+     */
     void disconnect(){
         try {
             serverSocket.close();
@@ -180,9 +253,11 @@ class Server implements StreamSocketListener {
 
     }
 
+
     void addClientListener(RequestListener requestListener){
         this.requestListener = requestListener;
     }
+
     void addUpdateViewListener(UpdateViewListener updateViewListener){this.updateViewListener = updateViewListener;}
 
     private void notificationNewClient(String[] infoClient){
@@ -216,6 +291,10 @@ class Server implements StreamSocketListener {
         requestListener.onDisconnectionRequest(requestEvent);
     }
 
+    /**
+     * This method allow to keep all logs into a specific system folder
+     * This method will create a folder if don't exist
+     */
     private void initFolders(){
         String OS = System.getProperty("os.name").toLowerCase();
 
@@ -240,6 +319,10 @@ class Server implements StreamSocketListener {
         }
     }
 
+    /**
+     * This is the method that write in asynchronous way all logs
+     * @param log specific string that will be write on system log
+     */
     private void writeToLogFile(final String log){
         final Calendar calendar = Calendar.getInstance();
         new Thread(new Runnable() {

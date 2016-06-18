@@ -151,7 +151,5 @@ public class WindowServer extends JFrame {
             JOptionPane.showMessageDialog(null,"Warning! Java version not supported!","Java version",
                     JOptionPane.WARNING_MESSAGE);
         }
-
-
     }
 }

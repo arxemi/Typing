@@ -21,9 +21,9 @@ import java.util.Properties;
  */
 
 public class WindowClient extends JFrame implements ClientServiceListener{
-    //java version supported
-    private static final float JAVA_MIN_VERSION_SUPPORTED = 1.6F;
-    //indirizzo e porta server
+
+    private static final float MINIMUM_JAVA_VERSION_SUPPORTED = 1.6F;
+
     private String ADDRESS_NAME;
     private final int ADDRESS_PORT = 6789;
 
@@ -40,17 +40,15 @@ public class WindowClient extends JFrame implements ClientServiceListener{
     private Color color_foreground_hover_lbl = new Color(0x196DC0);
     private Dimension btn_size = new Dimension(205,35);
 
-    // definizione ed istanziamento dei 4 panelli principali più il cardlayout per switchare tra i panel
     private JPanel mainPanel = new JPanel();
     private JPanel loginPanel = new JPanel();
     private JPanel signupPanel = new JPanel();
     private JPanel chatPanel = new JPanel();
-    private CardLayout cardLayout = new PageViewer(); //CardLayout modificato, con auto-resizing
+    private CardLayout cardLayout = new PageViewer(); //CardLayout con auto-resizing
 
     private JTextArea outputMessage;
     private DefaultListModel<String > defaultListModel = new DefaultListModel<String >();
 
-    //private boolean connection_status = false;
     private Client client = null;
 
     private WindowClient(){
@@ -63,9 +61,9 @@ public class WindowClient extends JFrame implements ClientServiceListener{
         mainPanel.add(signupPanel, "SIGN_UP");
         mainPanel.add(chatPanel, "CHAT");
 
-        init_components_login_panel();
-        init_components_signup_panel();
-        init_components_chat_panel();
+        initLoginPanelComponents();
+        initSignupPanelComponents();
+        initChatPanelComponents();
 
         //first panel to see
         add(mainPanel);
@@ -142,11 +140,12 @@ public class WindowClient extends JFrame implements ClientServiceListener{
         client = null;
     }
 
-    private void init_components_login_panel(){
-        //aggiunta componenti al pannello log in
+    private void initLoginPanelComponents(){
+
         JLabel title = new JLabel("Login to Typing");
         title.setFont(font_temp_title);
         title.setForeground(color_foreground_title);
+
         JPanel pnl_north = new JPanel(new FlowLayout(FlowLayout.CENTER,25,15));
         pnl_north.setBackground(color_background_panel);
         pnl_north.add(title);
@@ -155,10 +154,12 @@ public class WindowClient extends JFrame implements ClientServiceListener{
 
         JPanel temp_panel = new JPanel(new GridLayout(4,1,5,5));
         temp_panel.setBackground(color_background_panel);
+
         JLabel lbl_u = new JLabel("User");
         lbl_u.setFont(font_temp_label);
         lbl_u.setForeground(color_foreground_lbl);
         temp_panel.add(lbl_u);
+
         final JTextField txt_user = new JTextField(15);
         txt_user.setPreferredSize(new Dimension(150,25));
         temp_panel.add(txt_user);
@@ -166,13 +167,16 @@ public class WindowClient extends JFrame implements ClientServiceListener{
         lbl_p.setFont(font_temp_label);
         lbl_p.setForeground(color_foreground_lbl);
         temp_panel.add(lbl_p);
+
         final JPasswordField txt_psswd = new JPasswordField(15);
         temp_panel.add(txt_psswd);
+
         final JButton btn_login = new JButton("Login");
         btn_login.setBackground(color_background_btn);
         btn_login.setPreferredSize(btn_size);
         btn_login.setForeground(color_foreground_btn);
         btn_login.setFont(font_temp_btn);
+
         JPanel pnl_center = new JPanel(new BorderLayout());
         pnl_center.setBackground(color_background_panel);
         JPanel pnl_inner_one = new JPanel(new FlowLayout(FlowLayout.CENTER,5,10));
@@ -250,7 +254,7 @@ public class WindowClient extends JFrame implements ClientServiceListener{
 
     }
 
-    private void init_components_signup_panel(){
+    private void initSignupPanelComponents(){
         JLabel title = new JLabel("Sign up to Typing");
         title.setFont(font_temp_title);
         title.setForeground(color_foreground_title);
@@ -378,7 +382,7 @@ public class WindowClient extends JFrame implements ClientServiceListener{
         signupPanel.setBackground(color_background_panel);
     }
 
-    private void init_components_chat_panel(){
+    private void initChatPanelComponents(){
         JPanel pnl_center = new JPanel();
         JPanel pnl_south = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
@@ -547,7 +551,7 @@ public class WindowClient extends JFrame implements ClientServiceListener{
 
     private static void createWindow(){
         float version = Float.parseFloat(System.getProperty("java.version").substring(0,3));
-        if(version>=JAVA_MIN_VERSION_SUPPORTED){
+        if(version>=MINIMUM_JAVA_VERSION_SUPPORTED){
             try {
                 javax.swing.UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
             } catch (Exception e){
