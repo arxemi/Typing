@@ -1,40 +1,40 @@
 package server;
 
-import java.util.EventListener;
 import java.util.EventObject;
 
 /**
- * Created by emilio on 24/01/16.
+ * @author emilio acciaro on 24/01/16.
  */
 public class RequestEvent extends EventObject{
-    private static final long serialVersionUID = 1L;
     private String address;
     private String name;
-    private int indexOfclient;
-    boolean removeAllClients_ = false;
+    private int indexOfClient;
+    boolean removeAllClients = false;
 
-    public RequestEvent(Object e){
+    RequestEvent(Object e){
         super(e);
     }
-    public void setAddress(String address){
+
+    void setAddress(String address){
         this.address = address;
     }
-    public void setName(String name){
+
+    void setName(String name){
         this.name = name;
     }
 
-    public void setIndexOfclient(int i){
-        this.indexOfclient = i;
+    void setIndexOfClient(int i){
+        this.indexOfClient = i;
     }
 
-    public String[] getClientValues(){
+    String[] getClientValues(){
         return new String[]{address,name};
     }
 
-    public int getIndexOfclient(){
-        return indexOfclient;
+    int getIndexOfClient(){
+        return indexOfClient;
     }
 
-    public void removeAllClients(){ removeAllClients_ = true;}
+    void removeAllClients(){ removeAllClients = true;}
 }
 

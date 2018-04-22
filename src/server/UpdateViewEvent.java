@@ -3,29 +3,29 @@ package server;
 import java.util.EventObject;
 
 /**
- * Created by emilio on 26/01/16.
+ * @author emilio acciaro on 26/01/16.
  */
 public class UpdateViewEvent extends EventObject {
     private int numOfClients;
     private String log;
 
-    public UpdateViewEvent(Object e){
+    UpdateViewEvent(Object e){
         super(e);
     }
 
-    public void setLog(String log){
+    void setLog(String log){
         this.log = log;
     }
 
-    public String getLog(){
+    String getLog(){
         return log;
     }
 
-    public void setNumOfClients(int numOfClients){
+    void setNumOfClients(int numOfClients){
         this.numOfClients = numOfClients;
     }
 
-    public int getNumOfClients(){
+    int getNumOfClients(){
         return numOfClients;
     }
 }

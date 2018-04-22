@@ -1,8 +1,0 @@
-#versione 4.0
--implementazione del progetto 'chat_project_v3'
--aggiunta dell'opzione login e registrazione nel client
--invio delle informazioni al server, per la gestione delle richieste di login o registrazione
--due tipologie di costruttori sul client, login o registrazione
--connessione con database e validazione delle richieste
--controllo di login, nel caso in cui l'utente sia già online, non potrà essere utilizzata un altra connessione
-con lo stesso nickname

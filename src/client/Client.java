@@ -1,69 +1,188 @@
 package client;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import kalixdev.info.typing.message.MessageObject;
+
+import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
+
 
 /**
- * Created by emilio on 16/01/16.
+ * @author acciaro emilio on 16/01/16.
  */
-public class Client {
-    Socket socket;
-    DataOutputStream outputStream;
-    BufferedReader bufferedReader;
-    private String nomeClient;
-    private String indirizzo;
-    private int port;
-    private String psswd;
-    static final int LOG_IN_REQUEST = 0;
-    static final int SIGN_UP_REQUEST = 1;
-    private final String REQUEST_VALIDATED = "501-fh4hjh45h4";
-    private final String REQUEST_NOT_VALIDATED = "500-fh4hjh45h4";
-    private final String USER_ALREADY_CONNECTED = "502-fh4hjh45h4";
 
-    public Client(String indirizzo, int port, String nomeClient, String psswd, int request_type){
-        this.nomeClient = nomeClient;
-        this.psswd = psswd;
-        this.indirizzo = indirizzo;
-        this.port = port;
-        try {
-            socket = new Socket(indirizzo,port);
-            outputStream = new DataOutputStream(socket.getOutputStream());
-            bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            outputStream.writeBytes(request_type+"\n");
-            outputStream.writeBytes(nomeClient+"\n");
-            outputStream.writeBytes(psswd+"\n");
-        }catch (Exception e){}
+class Client {
+    private Socket socket;
+    private ObjectOutputStream outputStream;
+    private ObjectInputStream inputStream;
+    private ClientServiceListener clientServiceListener;
+    private boolean connected = true;
+
+    /**
+     * Default constructor to make a connection with server
+     *
+     * @param address need to make a {@link Socket} object
+     * @param port need to make a {@link Socket} object
+     * @param nomeClient  specific username to connect with server
+     * @param password associated password to specific username
+     * @param type allow to make different type of request
+     * @see MessageObject
+     */
+    Client(String address, int port, String nomeClient, String password, MessageObject.RequestType type)throws Exception{
+        MessageObject messageObject = new MessageObject(type);
+        messageObject.setUserName(nomeClient);
+        messageObject.setUserPassword(password);
+        socket = new Socket(address,port);
+        outputStream = new ObjectOutputStream(socket.getOutputStream());
+        inputStream = new ObjectInputStream(socket.getInputStream());
+        outputStream.writeObject(messageObject);
     }
 
-    public int validateRequest(){
-        int res = 0;
-        try {
-            String r = bufferedReader.readLine();
-            if(r.equals(REQUEST_NOT_VALIDATED)){
-                res = 0;
-            }else if(r.equals(REQUEST_VALIDATED)){
-                res = 1;
-            }else if(r.equals(USER_ALREADY_CONNECTED)){
-                res = 2;
+    /**
+     * This method allow to link this class to {@link WindowClient}
+     * and to interact with methods of {@link ClientServiceListener}
+     *
+     * @param  clientServiceListener to attach listener
+     * @see    ClientServiceListener
+     */
+    void setClientServiceListener(ClientServiceListener clientServiceListener){
+        this.clientServiceListener = clientServiceListener;
+    }
+
+
+    /**
+     * Returns an {@link ObjectOutputStream} object that allow to write on socket communication.
+     *
+     * @return      the specific private object
+     * @see         ObjectOutputStream
+     */
+    ObjectOutputStream getOutputStream() {
+        return outputStream;
+    }
+
+
+    /**
+     * This method make a thread that create an asynchronous communication with the socket of server
+     *
+     * @see MessageObject
+     * @see Thread
+     */
+    void startClientService(){
+        Thread t = new Thread(new Runnable() {
+            public void run() {
+                while(connected){
+                    MessageObject objectMessage = getResponseFromServer();
+                    switch (objectMessage.getType()){
+                        case DISCONNECTION_FROM_SERVER:
+                            sendCriticalMessageToWindowClient("COMMUNICATION SERVICE: server unreachable!");
+                            updateNameOfClientsOnline(MessageObject.RequestType.REMOVE_ALL_USERS);
+                            closeConnection();
+                            connected = false;
+                            break;
+                        case SEND_MESSAGE:
+                            sendMessageToWindowClient(objectMessage.getUserName().toUpperCase()+": "+objectMessage.getMessage());
+                            break;
+                        case ADD_ONLINE_USER:
+                            updateNameOfClientsOnline(MessageObject.RequestType.ADD_ONLINE_USER,objectMessage.getUserName());
+                            sendMessageToWindowClient(objectMessage.getUserName().toUpperCase()+" joined to chat!");
+                            break;
+                        case REMOVE_ONLINE_USER:
+                            updateNameOfClientsOnline(MessageObject.RequestType.REMOVE_ONLINE_USER,objectMessage.getUserName());
+                            sendMessageToWindowClient(objectMessage.getUserName().toUpperCase()+" left from chat!");
+                            break;
+                    }
+                }
             }
-        }catch (Exception e){}
-        return  res;
+        });
+        t.start();
     }
 
-    public void disconnect(int code){
-        if(socket instanceof Socket){
+    /**
+     * This method close all buffers and close the socket connection
+     * @see Socket
+     * @see InputStream
+     * @see OutputStream
+     */
 
+    private void closeConnection(){
+        try {
+            socket.close();
+            inputStream.close();
+            outputStream.close();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    private void sendMessageToWindowClient(String s){
+        ClientServiceEvent cse = new ClientServiceEvent(this);
+        cse.setMessage(s);
+        clientServiceListener.onReceiveMessageFromServer(cse);
+    }
+
+    private void sendCriticalMessageToWindowClient(String s){
+        ClientServiceEvent cse = new ClientServiceEvent(this);
+        cse.setMessage(s);
+        clientServiceListener.onReceiveCriticalMessageFromServer(cse);
+    }
+
+    private void updateNameOfClientsOnline(MessageObject.RequestType type){
+        ClientServiceEvent cse = new ClientServiceEvent(this);
+        if(type.equals(MessageObject.RequestType.REMOVE_ALL_USERS)){
+            clientServiceListener.removeClientFromList(cse);
+        }
+    }
+
+    private void updateNameOfClientsOnline(MessageObject.RequestType type, String name){
+        ClientServiceEvent cse = new ClientServiceEvent(this);
+        cse.setNameClient(name);
+        if(type.equals(MessageObject.RequestType.ADD_ONLINE_USER)){
+            clientServiceListener.addClientToList(cse);
+        }else if(type.equals(MessageObject.RequestType.REMOVE_ONLINE_USER)){
+            clientServiceListener.removeClientFromList(cse);
+        }
+    }
+
+    void updateNameOfClientsOnline(MessageObject.RequestType type, ArrayList<String> names){
+        ClientServiceEvent cse = new ClientServiceEvent(this);
+        cse.setClientsOnline(names);
+        if(type.equals(MessageObject.RequestType.ADD_ONLINE_USER)){
+            clientServiceListener.addClientToList(cse);
+
+        }else if(type.equals(MessageObject.RequestType.REMOVE_ONLINE_USER)){
+            clientServiceListener.removeClientFromList(cse);
+        }
+    }
+
+    /**
+     * This method return a {@link MessageObject} object read by inputStream
+     *
+     * @return messageObject
+     * @see MessageObject
+     */
+    MessageObject getResponseFromServer(){
+        MessageObject messageObject = null;
+        try {
+            messageObject = (MessageObject) inputStream.readObject();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return  messageObject;
+    }
+
+    /**
+     * This method allow to disconnect from {@link WindowClient} and
+     * to send a specific request before disconnecting
+     *
+     * @param type to specify the method of disconnection
+     * @see kalixdev.info.typing.message.MessageObject.RequestType
+     */
+    void disconnect(MessageObject.RequestType type){
+        if(!socket.isClosed()){
             try {
-                if(code == 1){
-                    outputStream.writeBytes("b5ih45i54g5hk443hbk43b\n");
-                }
-                else if(code == 2){
-                    outputStream.writeBytes("hsh53wh2k2b38dnwy3nu3tdb38bd7eyf2debidg2\n");
-                }
-                socket.close();
+                outputStream.writeObject(new MessageObject(type));
+                closeConnection();
+                connected = false;
             } catch (IOException e) {
                 e.printStackTrace();
             }

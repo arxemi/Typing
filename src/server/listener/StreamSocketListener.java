@@ -1,14 +1,14 @@
-package server.listener_interface;
+package server.listener;
 
 import server.StreamSocketEvent;
 
 import java.util.EventListener;
 
 /**
- * Created by emilio on 24/01/16.
+ * @author emilio acciaro on 24/01/16.
  */
 public interface StreamSocketListener extends EventListener{
-    void onReciveMessage(StreamSocketEvent e);
+    void onReceiveMessage(StreamSocketEvent e);
     void onRequestDeleteConnection(StreamSocketEvent e);
     void onJoinGroupRequest(StreamSocketEvent e);
 }
